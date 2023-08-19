@@ -20,7 +20,6 @@ public:
 	bool isPromotable();
 	void checkNormalCapture(std::vector<Position>* moves);
 	
-	
 	virtual bool isEnPassantAble() { return enpassant_able_; }
 	virtual std::vector<Position> getMoves();
 	virtual void moveTo(Position* pos);

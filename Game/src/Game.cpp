@@ -59,8 +59,34 @@ void Game::init()
 		pieces_[i + 8] = new Pawn(i, 1, BLACK);
 		piece_map_[i][1] = pieces_[i + 8];
 	}
+
 		// knights, bishops, rooks:
-		// kings & queens:
+	for (int i = 0; i < 2; ++i)
+	{
+		// bishops
+		pieces_[i + 16] = new Bishop(2 + i * 3, 7, WHITE);
+		piece_map_[2 + i * 3][7] = pieces_[i + 16];
+		pieces_[i + 18] = new Bishop(2 + i * 3, 0, BLACK);
+		piece_map_[2 + i * 3][0] = pieces_[i + 18];
+
+		// rooks
+		pieces_[i + 20] = new Rook(i * 7, 7, WHITE);
+		piece_map_[i * 7][7] = pieces_[i + 20];
+		pieces_[i + 22] = new Rook(i * 7, 0, BLACK);
+		piece_map_[i * 7][0] = pieces_[i + 22];
+
+		// knights
+
+	}
+
+		// queens:
+	pieces_[28] = new Queen(3, 7, WHITE);
+	piece_map_[3][7] = pieces_[28];
+	pieces_[29] = new Queen(3, 0, BLACK);
+	piece_map_[3][0] = pieces_[29];
+
+		// kings:
+
 }
 
 void Game::handleEvents() 
@@ -88,6 +114,10 @@ void Game::handleEvents()
 				{
 					Position old_position = piece_clicked_->getPosition();
 					piece_map_[old_position.x][old_position.y] = nullptr;
+
+					// DELETE PIECE IF CAPTURED
+
+					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're tyring to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
 				}

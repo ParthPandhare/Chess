@@ -9,6 +9,9 @@
 #include <vector>
 #include "constants.h"
 #include "pawn.h"
+#include "bishop.h"
+#include "rook.h"
+#include "queen.h"
 #include "pieceMap.h"
 
 class Game 

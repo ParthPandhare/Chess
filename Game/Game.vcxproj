@@ -130,17 +130,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\bishop.cpp" />
     <ClCompile Include="Src\Game.cpp" />
     <ClCompile Include="Src\main.cpp" />
     <ClCompile Include="Src\pawn.cpp" />
+    <ClCompile Include="Src\queen.cpp" />
+    <ClCompile Include="Src\rook.cpp" />
     <ClCompile Include="Src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Src\bishop.h" />
     <ClInclude Include="Src\constants.h" />
     <ClInclude Include="Src\Game.h" />
     <ClInclude Include="Src\pawn.h" />
     <ClInclude Include="Src\piece.h" />
     <ClInclude Include="Src\pieceMap.h" />
+    <ClInclude Include="Src\queen.h" />
+    <ClInclude Include="Src\rook.h" />
     <ClInclude Include="Src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
