@@ -26,7 +26,6 @@ public:
 		position_.x = x_pos;
 		position_.y = y_pos;
 		team_ = team;
-		is_active_ = true;
 		piece_type_ = piece_type;
 	}
 	~Piece() {}
@@ -34,8 +33,6 @@ public:
 	Position getPosition() { return position_; }
 	void setPosition(Position* pos) { position_.x = pos->x; position_.y = pos->y; }
 	int getTeam() { return team_; }
-	bool isActive() { return is_active_; }
-	void setInactive() { is_active_ = false; }
 	int getPieceType() { return piece_type_; }
 
 	virtual std::vector<Position> getMoves() = 0;
@@ -45,7 +42,6 @@ public:
 private:
 	Position position_;		// these are measured from the top left
 	int team_;
-	bool is_active_;
 	int piece_type_;
 };
 

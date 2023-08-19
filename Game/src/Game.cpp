@@ -12,6 +12,7 @@ Game::Game()
 	highlight_image_ = nullptr;
 	selected_image_ = nullptr;
 	piece_clicked_ = nullptr;
+	turn_ = WHITE;
 	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
 	for (int i = 0; i < 32; ++i) { pieces_[i] = nullptr; }
 }
@@ -129,7 +130,16 @@ void Game::handleEvents()
 					piece_map_[old_position.x][old_position.y] = nullptr;
 
 					// DELETE PIECE IF CAPTURED
+					if (checkPiece(&pos))
+					{
+						int i = 0;
+						while (pieces_[i] != piece_map_[pos.x][pos.y]) { ++i; }
+						delete pieces_[i];
+						pieces_[i] = nullptr;
+						piece_map_[pos.x][pos.y] = nullptr;
+					}
 
+					// actually move the piece
 					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're tyring to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
@@ -138,7 +148,7 @@ void Game::handleEvents()
 				left_click_pressed_ = false;
 				piece_clicked_ = nullptr;
 			}
-			else
+			else if (piece_map_[event.button.x / constants::SQUARE_DIMENSION][event.button.y / constants::SQUARE_DIMENSION] != nullptr)
 			{
 				left_click_pressed_ = true;
 				piece_clicked_ = piece_map_[event.button.x / constants::SQUARE_DIMENSION][event.button.y / constants::SQUARE_DIMENSION];

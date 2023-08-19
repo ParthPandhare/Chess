@@ -47,6 +47,7 @@ private:
 	SDL_Texture* piece_images_[12];
 	Piece* pieces_[32];
 	Piece* piece_clicked_;
+	int turn_;
 };
 
 #endif
