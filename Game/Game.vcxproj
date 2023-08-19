@@ -130,9 +130,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Class.cpp" />
     <ClCompile Include="Src\bishop.cpp" />
     <ClCompile Include="Src\Game.cpp" />
     <ClCompile Include="Src\king.cpp" />
+    <ClCompile Include="Src\knight.cpp" />
     <ClCompile Include="Src\main.cpp" />
     <ClCompile Include="Src\pawn.cpp" />
     <ClCompile Include="Src\queen.cpp" />
@@ -140,10 +142,12 @@
     <ClCompile Include="Src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Class.h" />
     <ClInclude Include="Src\bishop.h" />
     <ClInclude Include="Src\constants.h" />
     <ClInclude Include="Src\Game.h" />
     <ClInclude Include="Src\king.h" />
+    <ClInclude Include="Src\knight.h" />
     <ClInclude Include="Src\pawn.h" />
     <ClInclude Include="Src\piece.h" />
     <ClInclude Include="Src\pieceMap.h" />

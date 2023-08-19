@@ -21,6 +21,13 @@ Game::~Game()
 	SDL_DestroyWindow(window_);
 	SDL_DestroyRenderer(renderer_);
 	SDL_Quit();
+
+	for (int i = 0; i < 32; ++i)
+	{
+		if (pieces_[i] != nullptr)
+			delete pieces_[i];
+	}
+
 	std::cout << "Game Cleaned..." << std::endl;
 }
 
@@ -76,7 +83,10 @@ void Game::init()
 		piece_map_[i * 7][0] = pieces_[i + 22];
 
 		// knights
-
+		pieces_[i + 24] = new Knight(1 + i * 5, 7, WHITE);
+		piece_map_[1 + i * 5][7] = pieces_[i + 24];
+		pieces_[i + 26] = new Knight(1 + i * 5, 0, BLACK);
+		piece_map_[1 + i * 5][0] = pieces_[i + 26];
 	}
 
 		// queens:
