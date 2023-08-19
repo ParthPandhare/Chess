@@ -117,11 +117,11 @@ void Game::handleEvents()
 		{
 			std::cout << "Left click pressed!" << std::endl;
 			SDL_SetWindowMouseGrab(window_, SDL_TRUE);
-			
+			Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
+
 			if (left_click_pressed_)
 			{
 				// checks to see if the user wants to move the piece based on where they click
-				Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
 				std::vector<Position> moves = piece_clicked_->getMoves();
 				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 				if (itr != moves.end())
@@ -143,15 +143,17 @@ void Game::handleEvents()
 					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're tyring to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
+					// change turn
+					turn_ *= -1;
 				}
 
 				left_click_pressed_ = false;
 				piece_clicked_ = nullptr;
 			}
-			else if (piece_map_[event.button.x / constants::SQUARE_DIMENSION][event.button.y / constants::SQUARE_DIMENSION] != nullptr)
+			else if (piece_map_[pos.x][pos.y] != nullptr && piece_map_[pos.x][pos.y]->getTeam() == turn_)	// only allow people to move on their turn
 			{
 				left_click_pressed_ = true;
-				piece_clicked_ = piece_map_[event.button.x / constants::SQUARE_DIMENSION][event.button.y / constants::SQUARE_DIMENSION];
+				piece_clicked_ = piece_map_[pos.x][pos.y];
 			}
 		}
 		else if (event.button.button == SDL_BUTTON_RIGHT)
