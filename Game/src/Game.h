@@ -36,6 +36,8 @@ public:
 	void renderBoard();
 	void renderMultiple(SDL_Texture* texture, std::vector<Position> positions);		// renders the given texture to all given squares; useful for highlights
 	void renderPieces(Piece** pieces);	// given an array of pointers to pieces, it'll render all the pieces
+	void deletePiece(Piece* piece);
+	void resetEnPassants();
 
 private:
 	bool isRunning_, left_click_pressed_;
@@ -48,6 +50,7 @@ private:
 	Piece* pieces_[32];
 	Piece* piece_clicked_;
 	int turn_;
+	Piece* en_passantable_pawn_;
 };
 
 #endif

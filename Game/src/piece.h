@@ -31,13 +31,13 @@ public:
 	~Piece() {}
 
 	Position getPosition() { return position_; }
-	void setPosition(Position* pos) { position_.x = pos->x; position_.y = pos->y; }
+	void moveTo(Position* pos) { position_.x = pos->x; position_.y = pos->y; }
 	int getTeam() { return team_; }
 	int getPieceType() { return piece_type_; }
 
 	virtual std::vector<Position> getMoves() = 0;
-	virtual void moveTo(Position* pos) = 0;			// serparate moveTo function needed for pawns & kings
 	virtual bool isEnPassantAble() = 0;				// needed by utils to check en-passant-ability of pawns through piece pointers
+	virtual void setEnpassantAble(bool b) = 0;
 
 private:
 	Position position_;		// these are measured from the top left

@@ -19,8 +19,8 @@ public:
 	void getMovesInDirection(int x_dir, int y_dir, std::vector<Position>* moves);	// adds all possible moves in 1 direction to moves
 
 	virtual std::vector<Position> getMoves();
-	virtual void moveTo(Position* pos) { setPosition(pos); }
 	virtual bool isEnPassantAble() { return false; }
+	virtual void setEnpassantAble(bool b) { return; }
 
 private:
 

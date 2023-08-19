@@ -55,15 +55,3 @@ void Pawn::checkNormalCapture(std::vector<Position>* moves)
 	if (checkEnemyPiece(&pos_right, getTeam()))
 		moves->push_back(pos_right);
 }
-
-void Pawn::moveTo(Position* pos)
-{
-	setPosition(pos); 
-	
-	if (first_move_ && (pos->y == 4 || pos->y == 3))
-		enpassant_able_ = true;
-	else
-		enpassant_able_ = false;
-
-	first_move_ = false;
-}

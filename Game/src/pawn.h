@@ -19,10 +19,10 @@ public:
 
 	bool isPromotable();
 	void checkNormalCapture(std::vector<Position>* moves);
-	
+
+	virtual void setEnpassantAble(bool b) { enpassant_able_ = b; }
 	virtual bool isEnPassantAble() { return enpassant_able_; }
 	virtual std::vector<Position> getMoves();
-	virtual void moveTo(Position* pos);
 
 private:
 	bool first_move_;	// true if it's the pawn's first move (for double jump), false otherwise

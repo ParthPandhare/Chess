@@ -13,6 +13,7 @@ Game::Game()
 	selected_image_ = nullptr;
 	piece_clicked_ = nullptr;
 	turn_ = WHITE;
+	en_passantable_pawn_ = nullptr;
 	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
 	for (int i = 0; i < 32; ++i) { pieces_[i] = nullptr; }
 }
@@ -131,16 +132,21 @@ void Game::handleEvents()
 
 					// DELETE PIECE IF CAPTURED
 					if (checkPiece(&pos))
-					{
-						int i = 0;
-						while (pieces_[i] != piece_map_[pos.x][pos.y]) { ++i; }
-						delete pieces_[i];
-						pieces_[i] = nullptr;
-						piece_map_[pos.x][pos.y] = nullptr;
-					}
+						deletePiece(piece_map_[pos.x][pos.y]);
+					// delete piece if captured using en passant
+					else if (piece_clicked_->getPieceType() == W_PAWN && piece_clicked_->getPosition().y == 3)
+						deletePiece(piece_map_[pos.x][pos.y + 1]);
+					else if (piece_clicked_->getPieceType() == B_PAWN && piece_clicked_->getPosition().y == 4)
+						deletePiece(piece_map_[pos.x][pos.y - 1]);
+
+					// sets enpassants after resetting the previous ones
+					resetEnPassants();
+					if ((piece_clicked_->getPieceType() == W_PAWN || piece_clicked_->getPieceType() == B_PAWN) &&
+						(pos.y - piece_clicked_->getPosition().y) * piece_clicked_->getTeam() == 2)
+						piece_clicked_->setEnpassantAble(true);
 
 					// actually move the piece
-					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're tyring to move to is empty (the piece there should be deleted first)
+					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
 					// change turn
@@ -266,5 +272,26 @@ void Game::renderPieces(Piece** pieces)
 		if (pieces[i] == nullptr)	// if there's no pieces in the array (ex: if it was captured)
 			continue;
 		renderTexture(piece_images_[pieces[i]->getPieceType()], pieces[i]->getPosition());
+	}
+}
+
+void Game::deletePiece(Piece* piece)
+{
+	int i = 0;
+	while (pieces_[i] != piece) { ++i; }
+	piece_map_[piece->getPosition().x][piece->getPosition().y] = nullptr;
+	delete pieces_[i];
+	pieces_[i] = nullptr;
+}
+
+void Game::resetEnPassants()
+{
+	for (int i = 0; i < 32; ++i)
+	{
+		if (pieces_[i] != nullptr && pieces_[i]->isEnPassantAble())
+		{
+			pieces_[i]->setEnpassantAble(false);
+			return;
+		}
 	}
 }
