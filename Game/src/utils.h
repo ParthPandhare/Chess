@@ -10,5 +10,7 @@ bool checkEnemyPiece(Position* pos, int team);
 bool checkEnemyPiece(int x, int y, int team);
 bool checkPiece(Position* pos);
 bool checkPiece(int x, int y);
+bool checkEnpassantablePawn(Position* pos, int team);
+bool checkEnpassantablePawn(int x, int y, int team);
 
 #endif // !UTILS_H

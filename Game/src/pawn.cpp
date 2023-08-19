@@ -15,13 +15,31 @@ std::vector<Position> Pawn::getMoves()
 	std::vector<Position> moves;
 	Position pos = getPosition();
 
-	if (first_move_ && !checkPiece(pos.x, pos.y + 2 * getTeam()))
-		moves.push_back(Position(pos.x, pos.y + 2 * getTeam()));
+	// normal moves (first move double jump, moving forward)
 	if (!checkPiece(pos.x, pos.y + 1 * getTeam()))
+	{
 		moves.push_back(Position(pos.x, pos.y + 1 * getTeam()));
+
+		if (first_move_ && !checkPiece(pos.x, pos.y + 2 * getTeam()))
+			moves.push_back(Position(pos.x, pos.y + 2 * getTeam()));
+	}
 	checkNormalCapture(&moves);
 
 	// code to check for en-passants
+	if (getTeam() == WHITE && pos.y == 3)
+	{
+		if (checkEnpassantablePawn(pos.x + 1, pos.y, WHITE))
+			moves.push_back(Position(pos.x + 1, pos.y - 1));
+		else if (checkEnpassantablePawn(pos.x - 1, pos.y, WHITE))
+			moves.push_back(Position(pos.x - 1, pos.y - 1));
+	}
+	else if (getTeam() == BLACK && pos.y == 4)
+	{
+		if (checkEnpassantablePawn(pos.x + 1, pos.y, BLACK))
+			moves.push_back(Position(pos.x + 1, pos.y + 1));
+		else if (checkEnpassantablePawn(pos.x - 1, pos.y, BLACK))
+			moves.push_back(Position(pos.x - 1, pos.y + 1));
+	}
 
 	return moves;
 }
@@ -36,4 +54,16 @@ void Pawn::checkNormalCapture(std::vector<Position>* moves)
 		moves->push_back(pos_left);
 	if (checkEnemyPiece(&pos_right, getTeam()))
 		moves->push_back(pos_right);
+}
+
+void Pawn::moveTo(Position* pos)
+{
+	setPosition(pos); 
+	
+	if (first_move_ && (pos->y == 4 || pos->y == 3))
+		enpassant_able_ = true;
+	else
+		enpassant_able_ = false;
+
+	first_move_ = false;
 }

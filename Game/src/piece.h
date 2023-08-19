@@ -40,6 +40,7 @@ public:
 
 	virtual std::vector<Position> getMoves() = 0;
 	virtual void moveTo(Position* pos) = 0;			// serparate moveTo function needed for pawns & kings
+	virtual bool isEnPassantAble() = 0;				// needed by utils to check en-passant-ability of pawns through piece pointers
 
 private:
 	Position position_;		// these are measured from the top left

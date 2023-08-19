@@ -50,3 +50,26 @@ bool checkPiece(Position* pos)
 
 // overloaded checkPiece
 bool checkPiece(int x, int y) { Position pos(x, y); return checkPiece(&pos); }
+
+/*
+	checks whether there's a pawn at the position given of the opposite team
+	if there is it checks whether the pawn can be captured using en-passant
+*/
+bool checkEnpassantablePawn(int x, int y, int team)
+{
+	if (!isValidPosition(x, y))
+		return false;
+
+	if (piece_map_[x][y] == nullptr)
+		return false;
+
+	if (piece_map_[x][y]->getTeam() == (-1 * team) && piece_map_[x][y]->getPieceType() == 8 + 3 * team)
+	{
+		if (piece_map_[x][y]->isEnPassantAble())
+			return true;
+	}
+	return false;
+}
+
+// overloaded checkEnpassantablePawn
+bool checkEnpassantablePawn(Position* pos, int team) { return checkEnpassantablePawn(pos->x, pos->y, team); }
