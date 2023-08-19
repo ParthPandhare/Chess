@@ -12,6 +12,7 @@
 #include "bishop.h"
 #include "rook.h"
 #include "queen.h"
+#include "king.h"
 #include "pieceMap.h"
 
 class Game 

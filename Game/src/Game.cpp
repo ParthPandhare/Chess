@@ -86,7 +86,10 @@ void Game::init()
 	piece_map_[3][0] = pieces_[29];
 
 		// kings:
-
+	pieces_[30] = new King(4, 7, WHITE);
+	piece_map_[4][7] = pieces_[30];
+	pieces_[31] = new King(4, 0, BLACK);
+	piece_map_[4][0] = pieces_[31];
 }
 
 void Game::handleEvents() 
