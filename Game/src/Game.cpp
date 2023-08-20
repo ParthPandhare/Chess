@@ -11,6 +11,7 @@ Game::Game()
 	board_image_ = nullptr;
 	highlight_image_ = nullptr;
 	selected_image_ = nullptr;
+	promotion_image_ = nullptr;
 	piece_clicked_ = nullptr;
 	turn_ = WHITE;
 	en_passantable_pawn_ = nullptr;
@@ -129,19 +130,20 @@ void Game::handleEvents()
 				{
 					Position old_position = piece_clicked_->getPosition();
 					piece_map_[old_position.x][old_position.y] = nullptr;
+					int piece_type = piece_clicked_->getPieceType();
 
 					// DELETE PIECE IF CAPTURED
 					if (checkPiece(&pos))
 						deletePiece(piece_map_[pos.x][pos.y]);
 					// delete piece if captured using en passant
-					else if (piece_clicked_->getPieceType() == W_PAWN && piece_clicked_->getPosition().y == 3)
+					else if (piece_type == W_PAWN && piece_clicked_->getPosition().y == 3 && checkEnpassantablePawn(pos.x, pos.y + 1, WHITE))
 						deletePiece(piece_map_[pos.x][pos.y + 1]);
-					else if (piece_clicked_->getPieceType() == B_PAWN && piece_clicked_->getPosition().y == 4)
+					else if (piece_type == B_PAWN && piece_clicked_->getPosition().y == 4 && checkEnpassantablePawn(pos.x, pos.y - 1, BLACK))
 						deletePiece(piece_map_[pos.x][pos.y - 1]);
 
 					// sets enpassants after resetting the previous ones
 					resetEnPassants();
-					if ((piece_clicked_->getPieceType() == W_PAWN || piece_clicked_->getPieceType() == B_PAWN) &&
+					if ((piece_type == W_PAWN || piece_type == B_PAWN) &&
 						(pos.y - piece_clicked_->getPosition().y) * piece_clicked_->getTeam() == 2)
 						piece_clicked_->setEnpassantAble(true);
 
@@ -149,6 +151,11 @@ void Game::handleEvents()
 					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
+
+					// check for promotion
+					if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
+						promotePiece(piece_clicked_);
+
 					// change turn
 					turn_ *= -1;
 				}
@@ -180,7 +187,7 @@ void Game::handleEvents()
 
 void Game::update() 
 {
-
+	// could be cool to have like pieces captured or smthing here
 }
 
 void Game::render() 
@@ -201,7 +208,7 @@ void Game::render()
 
 void Game::loadImages()
 {
-	SDL_Surface* tmp[15];
+	SDL_Surface* tmp[16];
 	tmp[0] = IMG_Load("assets/board.png");
 	tmp[1] = IMG_Load("assets/black/rook.png");
 	tmp[2] = IMG_Load("assets/black/knight.png");
@@ -217,16 +224,18 @@ void Game::loadImages()
 	tmp[12] = IMG_Load("assets/white/pawn.png");
 	tmp[13] = IMG_Load("assets/highlight.png");
 	tmp[14] = IMG_Load("assets/selected.png");
+	tmp[15] = IMG_Load("assets/promotion.png");
 
 	board_image_ = SDL_CreateTextureFromSurface(renderer_, tmp[0]);
 	highlight_image_ = SDL_CreateTextureFromSurface(renderer_, tmp[13]);
 	selected_image_ = SDL_CreateTextureFromSurface(renderer_, tmp[14]);
+	promotion_image_ = SDL_CreateTextureFromSurface(renderer_, tmp[15]);
 	for (int i = 0; i < 12; ++i)
 	{
 		piece_images_[i] = SDL_CreateTextureFromSurface(renderer_, tmp[i + 1]);
 	}
 
-	for (int i = 0; i < 15; ++i)
+	for (int i = 0; i < 16; ++i)
 	{
 		SDL_FreeSurface(tmp[i]);
 	}
@@ -292,6 +301,77 @@ void Game::resetEnPassants()
 		{
 			pieces_[i]->setEnpassantAble(false);
 			return;
+		}
+	}
+}
+
+void Game::promotePiece(Piece* piece)
+{
+	std::cout << "Promoting piece" << std::endl;
+	Position pos = piece->getPosition();
+	int piece_type = piece->getPieceType();
+
+	// renders options:
+	for (int i = 0; i < 4; ++i)
+	{
+		renderTexture(selected_image_, pos.x, pos.y - i * piece->getTeam());
+		renderTexture(piece_images_[6 - 3 * piece->getTeam() - i], pos.x, pos.y - i * piece->getTeam());
+	}
+
+	SDL_RenderPresent(renderer_);
+
+	// waits for input & promotes accordingly:
+	for (; ; )
+	{
+		SDL_Event event;
+		SDL_PollEvent(&event);
+		if (event.type == SDL_QUIT)
+		{
+			isRunning_ = false;
+			return;
+		}
+		else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+		{
+			Position clicked(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
+			if (pos == clicked)		// queen selected
+			{
+				int i = 0;
+				while (pieces_[i] != piece) { ++i; }
+				deletePiece(pieces_[i]);
+				pieces_[i] = new Queen(pos.x, pos.y, turn_);
+				piece_map_[pos.x][pos.y] = pieces_[i];
+				break;
+			}
+			else if (pos.x == clicked.x)
+			{
+				if (clicked.y == pos.y - 1 * piece->getTeam())
+				{
+					int i = 0;
+					while (pieces_[i] != piece) { ++i; }
+					deletePiece(pieces_[i]);
+					pieces_[i] = new Bishop(pos.x, pos.y, turn_);
+					piece_map_[pos.x][pos.y] = pieces_[i];
+					break;
+				}
+				else if (clicked.y == pos.y - 2 * piece->getTeam())
+				{
+					int i = 0;
+					while (pieces_[i] != piece) { ++i; }
+					deletePiece(pieces_[i]);
+					pieces_[i] = new Knight(pos.x, pos.y, turn_);
+					piece_map_[pos.x][pos.y] = pieces_[i];
+					break;
+				}
+				else if (clicked.y == pos.y - 3 * piece->getTeam())
+				{
+					int i = 0;
+					while (pieces_[i] != piece) { ++i; }
+					deletePiece(pieces_[i]);
+					pieces_[i] = new Rook(pos.x, pos.y, turn_);
+					piece_map_[pos.x][pos.y] = pieces_[i];
+					break;
+				}
+			}
 		}
 	}
 }

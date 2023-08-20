@@ -38,6 +38,7 @@ public:
 	void renderPieces(Piece** pieces);	// given an array of pointers to pieces, it'll render all the pieces
 	void deletePiece(Piece* piece);
 	void resetEnPassants();
+	void promotePiece(Piece* piece);
 
 private:
 	bool isRunning_, left_click_pressed_;
@@ -46,6 +47,7 @@ private:
 	SDL_Texture* board_image_;
 	SDL_Texture* highlight_image_;
 	SDL_Texture* selected_image_;
+	SDL_Texture* promotion_image_;
 	SDL_Texture* piece_images_[12];
 	Piece* pieces_[32];
 	Piece* piece_clicked_;
