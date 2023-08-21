@@ -7,6 +7,10 @@ Game::Game()
 	isRunning_ = false;
 	left_click_pressed_ = false;
 	board_changed_ = true;
+	w_castle_king_ = true;
+	b_castle_king_ = true;
+	w_castle_queen_ = true;
+	b_castle_queen_ = true;
 	window_ = nullptr;
 	renderer_ = nullptr;
 	board_image_ = nullptr;
@@ -120,7 +124,13 @@ void Game::handleEvents()
 			{
 				// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
 				std::vector<Position> moves = piece_clicked_->getMoves();
-				//getLegalMoves(&moves, piece_clicked_);
+				getLegalMoves(&moves, piece_clicked_);
+
+				// adds castling moves if possible:
+				if (piece_clicked_ == w_king_)
+					canCastle(w_king_, &moves);
+				else if (piece_clicked_ == b_king_)
+					canCastle(b_king_, &moves);
 
 				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 				if (itr != moves.end())
@@ -148,6 +158,52 @@ void Game::handleEvents()
 					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
 					piece_map_[pos.x][pos.y] = piece_clicked_;
 					piece_clicked_->moveTo(&pos);
+
+					// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
+					if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
+					{
+						if (piece_clicked_ == w_king_)
+						{
+							if (pos.x - old_position.x == 2)	// if-elses move rook if needed
+							{
+								Position temp(pos.x - 1, pos.y);
+								piece_map_[7][7]->moveTo(&temp);
+							}
+							else if (pos.x - old_position.x == -2)
+							{
+								Position temp(pos.x + 1, pos.y);
+								piece_map_[0][7]->moveTo(&temp);
+							}
+							w_castle_king_ = false;
+							w_castle_queen_ = false;
+						}
+						else if (w_castle_king_ && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
+							w_castle_king_ = false;
+						else if (w_castle_king_ && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
+							w_castle_queen_ = false;
+					}
+					else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
+					{
+						if (piece_clicked_ == b_king_)
+						{
+							if (pos.x - old_position.x == 2)	// if it castled kingside
+							{
+								Position temp(pos.x - 1, pos.y);
+								piece_map_[7][0]->moveTo(&temp);
+							}
+							else if (pos.x - old_position.x == -2)
+							{
+								Position temp(pos.x + 1, pos.y);
+								piece_map_[0][0]->moveTo(&temp);
+							}
+							b_castle_king_ = false;
+							b_castle_queen_ = false;
+						}
+						else if (b_castle_king_ && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
+							b_castle_king_ = false;
+						else if (b_castle_king_ && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
+							b_castle_queen_ = false;
+					}
 
 					// check for promotion
 					if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
@@ -202,6 +258,10 @@ void Game::render()
 	if (piece_clicked_)
 	{
 		std::vector<Position> moves = piece_clicked_->getMoves();
+		if (piece_clicked_ == w_king_)
+			canCastle(w_king_, &moves);
+		else if (piece_clicked_ == b_king_)
+			canCastle(b_king_, &moves);
 		getLegalMoves(&moves, piece_clicked_);
 		renderMultiple(highlight_image_, moves);
 		renderTexture(selected_image_, piece_clicked_->getPosition());
@@ -412,6 +472,39 @@ bool Game::isCheck(Piece* target_piece)
 		}
 	}
 	return false;
+}
+
+bool Game::isCheck(Position pos, int team)
+{
+	for (int x = 0; x < 8; ++x)
+	{
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != nullptr && piece_map_[x][y]->getTeam() != team)
+			{
+				std::vector<Position> enemy_moves = piece_map_[x][y]->getMoves();
+				if (std::find(enemy_moves.begin(), enemy_moves.end(), pos) != enemy_moves.end())
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Game::canCastle(Piece* piece, std::vector<Position>* moves)
+{
+	Position pos = piece->getPosition();
+	
+	if (((piece->getTeam() == WHITE && w_castle_king_) || (piece->getTeam() == BLACK && b_castle_king_)) &&					// if can castle kingside
+		(piece_map_[pos.x + 1][pos.y] == nullptr && piece_map_[pos.x + 2][pos.y] == nullptr) &&								// if squares empty
+		(!isCheck(Position(pos.x + 1, pos.y), piece->getTeam()) && !isCheck(Position(pos.x + 2, pos.y), piece->getTeam())) && // not check
+		!isCheck(piece))	// if king not in check
+		moves->push_back(Position(pos.x + 2, pos.y));
+	if (((piece->getTeam() == WHITE && w_castle_queen_) || (piece->getTeam() == BLACK && b_castle_queen_)) && 
+		(piece_map_[pos.x - 1][pos.y] == nullptr && piece_map_[pos.x - 2][pos.y] == nullptr) &&
+		(!isCheck(Position(pos.x - 1, pos.y), piece->getTeam()) && !isCheck(Position(pos.x - 2, pos.y), piece->getTeam())) && 
+		!isCheck(piece))
+		moves->push_back(Position(pos.x - 2, pos.y));
 }
 
 bool Game::isLegal(Piece* piece, Position pos)

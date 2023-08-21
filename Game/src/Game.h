@@ -41,10 +41,13 @@ public:
 	void resetEnPassants();
 	void promotePiece(Piece* piece);
 	bool isCheck(Piece* target_piece);
+	bool isCheck(Position pos, int team);
+	void canCastle(Piece* piece, std::vector<Position>* moves);
 	bool isLegal(Piece* piece, Position pos);
 
 private:
-	bool isRunning_, left_click_pressed_, board_changed_;
+	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
+	int turn_;
 	SDL_Window* window_;
 	SDL_Renderer* renderer_;
 	SDL_Texture* board_image_;
@@ -53,7 +56,6 @@ private:
 	SDL_Texture* promotion_image_;
 	SDL_Texture* piece_images_[12];
 	Piece* piece_clicked_;
-	int turn_;
 	Piece* en_passantable_pawn_;
 	Piece* w_king_;
 	Piece* b_king_;
