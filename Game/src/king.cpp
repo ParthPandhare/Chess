@@ -23,11 +23,14 @@ void King::getMovesInDirection(int x_dir, int y_dir, std::vector<Position>* move
 	Position pos = getPosition();
 	pos.x += x_dir;
 	pos.y += y_dir;
-	if (checkPiece(&pos))
+	if (isValidPosition(&pos))
 	{
-		if (checkEnemyPiece(&pos, getTeam()))
-			moves->push_back(pos);
-		return;
+		if (checkPiece(&pos))
+		{
+			if (checkEnemyPiece(&pos, getTeam()))
+				moves->push_back(pos);
+			return;
+		}
+		moves->push_back(pos);
 	}
-	moves->push_back(pos);
 }

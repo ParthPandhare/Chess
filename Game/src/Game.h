@@ -35,7 +35,7 @@ public:
 	void renderTexture(SDL_Texture* texture, Position pos) { renderTexture(texture, pos.x, pos.y); };
 	void renderBoard();
 	void renderMultiple(SDL_Texture* texture, std::vector<Position> positions);		// renders the given texture to all given squares; useful for highlights
-	void renderPieces(Piece** pieces);	// given an array of pointers to pieces, it'll render all the pieces
+	void renderPieces();	
 	void getLegalMoves(std::vector<Position>* moves, Piece* piece);
 	void deletePiece(Piece* piece);
 	void resetEnPassants();
@@ -44,7 +44,7 @@ public:
 	bool isLegal(Piece* piece, Position pos);
 
 private:
-	bool isRunning_, left_click_pressed_;
+	bool isRunning_, left_click_pressed_, board_changed_;
 	SDL_Window* window_;
 	SDL_Renderer* renderer_;
 	SDL_Texture* board_image_;
@@ -52,7 +52,6 @@ private:
 	SDL_Texture* selected_image_;
 	SDL_Texture* promotion_image_;
 	SDL_Texture* piece_images_[12];
-	Piece* pieces_[32];
 	Piece* piece_clicked_;
 	int turn_;
 	Piece* en_passantable_pawn_;

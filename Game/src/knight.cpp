@@ -17,16 +17,22 @@ void Knight::getMovesInDirection(int x_dir, int y_dir, std::vector<Position>* mo
 	Position pos = getPosition();
 	pos.x += x_dir;
 	pos.y += 2 * y_dir;
-	if (checkEnemyPiece(&pos, getTeam()))
-		moves->push_back(pos);
-	else if (!checkPiece(&pos))
-		moves->push_back(pos);
+	if (isValidPosition(&pos))
+	{
+		if (checkEnemyPiece(&pos, getTeam()))
+			moves->push_back(pos);
+		else if (!checkPiece(&pos))
+			moves->push_back(pos);
+	}
 
 	pos = getPosition();
 	pos.x += 2 * x_dir;
 	pos.y += y_dir;
-	if (checkEnemyPiece(&pos, getTeam()))
-		moves->push_back(pos);
-	else if (!checkPiece(&pos))
-		moves->push_back(pos);
+	if (isValidPosition(&pos))
+	{
+		if (checkEnemyPiece(&pos, getTeam()))
+			moves->push_back(pos);
+		else if (!checkPiece(&pos))
+			moves->push_back(pos);
+	}
 }

@@ -6,6 +6,7 @@ Game::Game()
 {
 	isRunning_ = false;
 	left_click_pressed_ = false;
+	board_changed_ = true;
 	window_ = nullptr;
 	renderer_ = nullptr;
 	board_image_ = nullptr;
@@ -18,7 +19,6 @@ Game::Game()
 	w_king_ = nullptr;
 	b_king_ = nullptr;
 	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
-	for (int i = 0; i < 32; ++i) { pieces_[i] = nullptr; }
 }
 
 Game::~Game() 
@@ -27,10 +27,13 @@ Game::~Game()
 	SDL_DestroyRenderer(renderer_);
 	SDL_Quit();
 
-	for (int i = 0; i < 32; ++i)
+	for (int x = 0; x < 8; ++x)
 	{
-		if (pieces_[i] != nullptr)
-			delete pieces_[i];
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != nullptr)
+				delete piece_map_[x][y];
+		}
 	}
 
 	std::cout << "Game Cleaned..." << std::endl;
@@ -66,47 +69,35 @@ void Game::init()
 		// pawns:
 	for (int i = 0; i < 8; ++i)
 	{
-		pieces_[i] = new Pawn(i, 6, WHITE);
-		piece_map_[i][6] = pieces_[i];
-		pieces_[i + 8] = new Pawn(i, 1, BLACK);
-		piece_map_[i][1] = pieces_[i + 8];
+		piece_map_[i][6] = new Pawn(i, 6, WHITE);
+		piece_map_[i][1] = new Pawn(i, 1, BLACK);
 	}
 
 		// knights, bishops, rooks:
 	for (int i = 0; i < 2; ++i)
 	{
 		// bishops
-		pieces_[i + 16] = new Bishop(2 + i * 3, 7, WHITE);
-		piece_map_[2 + i * 3][7] = pieces_[i + 16];
-		pieces_[i + 18] = new Bishop(2 + i * 3, 0, BLACK);
-		piece_map_[2 + i * 3][0] = pieces_[i + 18];
+		piece_map_[2 + i * 3][7] = new Bishop(2 + i * 3, 7, WHITE);
+		piece_map_[2 + i * 3][0] = new Bishop(2 + i * 3, 0, BLACK);
 
 		// rooks
-		pieces_[i + 20] = new Rook(i * 7, 7, WHITE);
-		piece_map_[i * 7][7] = pieces_[i + 20];
-		pieces_[i + 22] = new Rook(i * 7, 0, BLACK);
-		piece_map_[i * 7][0] = pieces_[i + 22];
+		piece_map_[i * 7][7] = new Rook(i * 7, 7, WHITE);
+		piece_map_[i * 7][0] = new Rook(i * 7, 0, BLACK);
 
 		// knights
-		pieces_[i + 24] = new Knight(1 + i * 5, 7, WHITE);
-		piece_map_[1 + i * 5][7] = pieces_[i + 24];
-		pieces_[i + 26] = new Knight(1 + i * 5, 0, BLACK);
-		piece_map_[1 + i * 5][0] = pieces_[i + 26];
+		piece_map_[1 + i * 5][7] = new Knight(1 + i * 5, 7, WHITE);
+		piece_map_[1 + i * 5][0] = new Knight(1 + i * 5, 0, BLACK);
 	}
 
 		// queens:
-	pieces_[28] = new Queen(3, 7, WHITE);
-	piece_map_[3][7] = pieces_[28];
-	pieces_[29] = new Queen(3, 0, BLACK);
-	piece_map_[3][0] = pieces_[29];
+	piece_map_[3][7] = new Queen(3, 7, WHITE);
+	piece_map_[3][0] = new Queen(3, 0, BLACK);
 
 		// kings:
-	pieces_[30] = new King(4, 7, WHITE);
-	piece_map_[4][7] = pieces_[30];
-	w_king_ = pieces_[30];
-	pieces_[31] = new King(4, 0, BLACK);
-	piece_map_[4][0] = pieces_[31];
-	b_king_ = pieces_[31];
+	w_king_ = new King(4, 7, WHITE);
+	piece_map_[4][7] = w_king_;
+	b_king_ = new King(4, 0, BLACK);
+	piece_map_[4][0] = b_king_;
 }
 
 void Game::handleEvents() 
@@ -165,12 +156,13 @@ void Game::handleEvents()
 					// change turn
 					turn_ *= -1;
 				}
-
+				board_changed_ = true;
 				left_click_pressed_ = false;
 				piece_clicked_ = nullptr;
 			}
 			else if (piece_map_[pos.x][pos.y] != nullptr && piece_map_[pos.x][pos.y]->getTeam() == turn_)	// only allow people to move on their turn
 			{
+				board_changed_ = true;
 				left_click_pressed_ = true;
 				piece_clicked_ = piece_map_[pos.x][pos.y];
 			}
@@ -198,15 +190,19 @@ void Game::update()
 
 void Game::render() 
 {
+	// if the board is the same, nothing needs to be done
+	if (!board_changed_)
+		return;
+
 	// if user input, then do all of this stuff. until then do nothing:
 	SDL_RenderClear(renderer_);
 
 	renderBoard();
-	renderPieces(pieces_);
+	renderPieces();
 	if (piece_clicked_)
 	{
 		std::vector<Position> moves = piece_clicked_->getMoves();
-		//getLegalMoves(&moves, piece_clicked_);
+		getLegalMoves(&moves, piece_clicked_);
 		renderMultiple(highlight_image_, moves);
 		renderTexture(selected_image_, piece_clicked_->getPosition());
 	}
@@ -218,6 +214,7 @@ void Game::render()
 		renderTexture(highlight_image_, b_king_->getPosition());
 	
 	SDL_RenderPresent(renderer_);
+	board_changed_ = false;
 }
 
 void Game::loadImages()
@@ -288,13 +285,16 @@ void Game::renderMultiple(SDL_Texture* texture, std::vector<Position> positions)
 	}
 }
 
-void Game::renderPieces(Piece** pieces)
+void Game::renderPieces()
 {
-	for (int i = 0; i < 32; i++)
+	for (int x = 0; x < 8; ++x)
 	{
-		if (pieces[i] == nullptr)	// if there's no pieces in the array (ex: if it was captured)
-			continue;
-		renderTexture(piece_images_[pieces[i]->getPieceType()], pieces[i]->getPosition());
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] == nullptr)
+				continue;
+			renderTexture(piece_images_[piece_map_[x][y]->getPieceType()], piece_map_[x][y]->getPosition());
+		}
 	}
 }
 
@@ -314,21 +314,22 @@ void Game::getLegalMoves(std::vector<Position>* moves, Piece* piece)
 
 void Game::deletePiece(Piece* piece)
 {
-	int i = 0;
-	while (pieces_[i] != piece) { ++i; }
-	piece_map_[piece->getPosition().x][piece->getPosition().y] = nullptr;
-	delete pieces_[i];
-	pieces_[i] = nullptr;
+	Position pos = piece->getPosition();
+	delete piece_map_[pos.x][pos.y];
+	piece_map_[pos.x][pos.y] = nullptr;
 }
 
 void Game::resetEnPassants()
 {
-	for (int i = 0; i < 32; ++i)
+	for (int x = 0; x < 8; ++x)
 	{
-		if (pieces_[i] != nullptr && pieces_[i]->isEnPassantAble())
+		for (int y = 0; y < 8; ++y)
 		{
-			pieces_[i]->setEnpassantAble(false);
-			return;
+			if (piece_map_[x][y] != nullptr && piece_map_[x][y]->isEnPassantAble())
+			{
+				piece_map_[x][y]->setEnpassantAble(false);
+				return;
+			}
 		}
 	}
 }
@@ -363,40 +364,28 @@ void Game::promotePiece(Piece* piece)
 			Position clicked(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
 			if (pos == clicked)		// queen selected
 			{
-				int i = 0;
-				while (pieces_[i] != piece) { ++i; }
-				deletePiece(pieces_[i]);
-				pieces_[i] = new Queen(pos.x, pos.y, turn_);
-				piece_map_[pos.x][pos.y] = pieces_[i];
+				delete piece_map_[pos.x][pos.y];
+				piece_map_[pos.x][pos.y] = new Queen(pos.x, pos.y, turn_);
 				break;
 			}
 			else if (pos.x == clicked.x)
 			{
 				if (clicked.y == pos.y - 1 * piece->getTeam())
 				{
-					int i = 0;
-					while (pieces_[i] != piece) { ++i; }
-					deletePiece(pieces_[i]);
-					pieces_[i] = new Bishop(pos.x, pos.y, turn_);
-					piece_map_[pos.x][pos.y] = pieces_[i];
+					delete piece_map_[pos.x][pos.y];
+					piece_map_[pos.x][pos.y] = new Bishop(pos.x, pos.y, turn_);
 					break;
 				}
 				else if (clicked.y == pos.y - 2 * piece->getTeam())
 				{
-					int i = 0;
-					while (pieces_[i] != piece) { ++i; }
-					deletePiece(pieces_[i]);
-					pieces_[i] = new Knight(pos.x, pos.y, turn_);
-					piece_map_[pos.x][pos.y] = pieces_[i];
+					delete piece_map_[pos.x][pos.y];
+					piece_map_[pos.x][pos.y] = new Knight(pos.x, pos.y, turn_);
 					break;
 				}
 				else if (clicked.y == pos.y - 3 * piece->getTeam())
 				{
-					int i = 0;
-					while (pieces_[i] != piece) { ++i; }
-					deletePiece(pieces_[i]);
-					pieces_[i] = new Rook(pos.x, pos.y, turn_);
-					piece_map_[pos.x][pos.y] = pieces_[i];
+					delete piece_map_[pos.x][pos.y];
+					piece_map_[pos.x][pos.y] = new Rook(pos.x, pos.y, turn_);
 					break;
 				}
 			}
