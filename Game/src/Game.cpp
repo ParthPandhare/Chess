@@ -127,8 +127,10 @@ void Game::handleEvents()
 
 			if (left_click_pressed_)
 			{
-				// checks to see if the user wants to move the piece based on where they click
+				// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
 				std::vector<Position> moves = piece_clicked_->getMoves();
+				getLegalMoves(&moves, piece_clicked_);
+
 				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 				if (itr != moves.end())
 				{
@@ -203,7 +205,9 @@ void Game::render()
 	renderPieces(pieces_);
 	if (piece_clicked_)
 	{
-		renderMultiple(highlight_image_, piece_clicked_->getMoves());
+		std::vector<Position> moves = piece_clicked_->getMoves();
+		getLegalMoves(&moves, piece_clicked_);
+		renderMultiple(highlight_image_, moves);
 		renderTexture(selected_image_, piece_clicked_->getPosition());
 	}
 
@@ -291,6 +295,20 @@ void Game::renderPieces(Piece** pieces)
 		if (pieces[i] == nullptr)	// if there's no pieces in the array (ex: if it was captured)
 			continue;
 		renderTexture(piece_images_[pieces[i]->getPieceType()], pieces[i]->getPosition());
+	}
+}
+
+void Game::getLegalMoves(std::vector<Position>* moves, Piece* piece)
+{
+	for (int i = 0; i < moves->size(); )
+	{
+		if (!isLegal(piece, (*moves)[i]))
+		{
+			moves->erase(moves->begin() + i);
+			continue;
+		}
+		else
+			++i;
 	}
 }
 
@@ -405,4 +423,33 @@ bool Game::isCheck(Piece* target_piece)
 		}
 	}
 	return false;
+}
+
+bool Game::isLegal(Piece* piece, Position pos)
+{
+	// create temporary captured piece if the move is a capture
+	Piece* captured_piece = nullptr;
+	if (checkPiece(&pos))
+		captured_piece = piece_map_[pos.x][pos.y];
+
+	// save old position & change the moving piece's position
+	Position old_position = piece->getPosition();
+	piece->moveTo(&pos);
+	piece_map_[pos.x][pos.y] = piece;
+	piece_map_[old_position.x][old_position.y] = nullptr;
+
+	// check if the king is in check, false if it is, true if it isn't
+	bool is_legal = true;
+	if ((piece->getTeam() == WHITE && isCheck(w_king_)) || (piece->getTeam() == BLACK && isCheck(b_king_)))
+		is_legal = false;
+
+	// reset all pieces & the piece_map_
+	piece->moveTo(&old_position);
+	piece_map_[old_position.x][old_position.y] = piece;
+	if (captured_piece != nullptr)
+		piece_map_[pos.x][pos.y] = captured_piece;
+	else
+		piece_map_[pos.x][pos.y] = nullptr;
+
+	return is_legal;
 }

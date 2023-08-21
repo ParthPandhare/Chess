@@ -36,10 +36,12 @@ public:
 	void renderBoard();
 	void renderMultiple(SDL_Texture* texture, std::vector<Position> positions);		// renders the given texture to all given squares; useful for highlights
 	void renderPieces(Piece** pieces);	// given an array of pointers to pieces, it'll render all the pieces
+	void getLegalMoves(std::vector<Position>* moves, Piece* piece);
 	void deletePiece(Piece* piece);
 	void resetEnPassants();
 	void promotePiece(Piece* piece);
 	bool isCheck(Piece* target_piece);
+	bool isLegal(Piece* piece, Position pos);
 
 private:
 	bool isRunning_, left_click_pressed_;
