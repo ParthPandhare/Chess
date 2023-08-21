@@ -39,6 +39,7 @@ public:
 	void deletePiece(Piece* piece);
 	void resetEnPassants();
 	void promotePiece(Piece* piece);
+	bool isCheck(Piece* target_piece);
 
 private:
 	bool isRunning_, left_click_pressed_;
@@ -53,6 +54,8 @@ private:
 	Piece* piece_clicked_;
 	int turn_;
 	Piece* en_passantable_pawn_;
+	Piece* w_king_;
+	Piece* b_king_;
 };
 
 #endif

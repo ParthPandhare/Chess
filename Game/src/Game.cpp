@@ -15,6 +15,8 @@ Game::Game()
 	piece_clicked_ = nullptr;
 	turn_ = WHITE;
 	en_passantable_pawn_ = nullptr;
+	w_king_ = nullptr;
+	b_king_ = nullptr;
 	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
 	for (int i = 0; i < 32; ++i) { pieces_[i] = nullptr; }
 }
@@ -101,8 +103,10 @@ void Game::init()
 		// kings:
 	pieces_[30] = new King(4, 7, WHITE);
 	piece_map_[4][7] = pieces_[30];
+	w_king_ = pieces_[30];
 	pieces_[31] = new King(4, 0, BLACK);
 	piece_map_[4][0] = pieces_[31];
+	b_king_ = pieces_[31];
 }
 
 void Game::handleEvents() 
@@ -202,6 +206,12 @@ void Game::render()
 		renderMultiple(highlight_image_, piece_clicked_->getMoves());
 		renderTexture(selected_image_, piece_clicked_->getPosition());
 	}
+
+	// render checks
+	if (turn_ == WHITE && isCheck(w_king_))
+		renderTexture(highlight_image_, w_king_->getPosition());
+	else if (isCheck(b_king_))
+		renderTexture(highlight_image_, b_king_->getPosition());
 	
 	SDL_RenderPresent(renderer_);
 }
@@ -374,4 +384,25 @@ void Game::promotePiece(Piece* piece)
 			}
 		}
 	}
+}
+
+bool Game::isCheck(Piece* target_piece)
+{
+	int team = target_piece->getTeam();
+	Position pos = target_piece->getPosition();
+	
+	// iterate through piece_map_, find enemy pieces, check if enemy pieces attack target_piece
+	for (int x = 0; x < 8; ++x)
+	{
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != nullptr && piece_map_[x][y]->getTeam() != team)
+			{
+				std::vector<Position> enemy_moves = piece_map_[x][y]->getMoves();
+				if (std::find(enemy_moves.begin(), enemy_moves.end(), pos) != enemy_moves.end())
+					return true;
+			}
+		}
+	}
+	return false;
 }

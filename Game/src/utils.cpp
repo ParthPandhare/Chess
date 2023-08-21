@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "pieceMap.h"
 
 bool isValidPosition(Position* pos)
 {

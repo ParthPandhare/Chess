@@ -3,6 +3,7 @@
 
 #include "piece.h"
 #include "Game.h"
+#include "pieceMap.h"
 
 bool isValidPosition(Position* pos);
 bool isValidPosition(int x, int y);
