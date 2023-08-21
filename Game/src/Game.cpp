@@ -129,7 +129,7 @@ void Game::handleEvents()
 			{
 				// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
 				std::vector<Position> moves = piece_clicked_->getMoves();
-				getLegalMoves(&moves, piece_clicked_);
+				//getLegalMoves(&moves, piece_clicked_);
 
 				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 				if (itr != moves.end())
@@ -206,7 +206,7 @@ void Game::render()
 	if (piece_clicked_)
 	{
 		std::vector<Position> moves = piece_clicked_->getMoves();
-		getLegalMoves(&moves, piece_clicked_);
+		//getLegalMoves(&moves, piece_clicked_);
 		renderMultiple(highlight_image_, moves);
 		renderTexture(selected_image_, piece_clicked_->getPosition());
 	}
