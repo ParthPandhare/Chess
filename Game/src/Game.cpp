@@ -1,30 +1,7 @@
 #include "Game.h"
 
+Game* Game::instancePtr = NULL;
 Piece* piece_map_[8][8] = { nullptr };
-
-Game::Game() 
-{
-	isRunning_ = false;
-	left_click_pressed_ = false;
-	board_changed_ = true;
-	w_castle_king_ = true;
-	b_castle_king_ = true;
-	w_castle_queen_ = true;
-	b_castle_queen_ = true;
-	window_ = nullptr;
-	renderer_ = nullptr;
-	board_image_ = nullptr;
-	highlight_image_ = nullptr;
-	selected_image_ = nullptr;
-	promotion_image_ = nullptr;
-	piece_clicked_ = nullptr;
-	turn_ = WHITE;
-	en_passantable_pawn_ = nullptr;
-	w_king_ = nullptr;
-	b_king_ = nullptr;
-	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
-	result_ = 0;
-}
 
 Game::~Game() 
 {
@@ -130,7 +107,7 @@ void Game::handleEvents()
 
 	/* checks for user inputs */
 	SDL_Event event;
-	SDL_PollEvent(&event);
+	SDL_WaitEvent(&event);
 
 	if (event.type == SDL_QUIT)
 		isRunning_ = false;
@@ -272,7 +249,7 @@ void Game::render()
 	if (result_ != 0)
 	{
 		SDL_Event event;
-		SDL_PollEvent(&event);
+		SDL_WaitEvent(&event);
 		if (event.type == SDL_QUIT)
 		{
 			isRunning_ = false;
@@ -447,7 +424,7 @@ void Game::promotePiece(Piece* piece)
 	for (; ; )
 	{
 		SDL_Event event;
-		SDL_PollEvent(&event);
+		SDL_WaitEvent(&event);
 		if (event.type == SDL_QUIT)
 		{
 			isRunning_ = false;

@@ -1,20 +1,19 @@
 #include "Game.h"
 
 
-Game* game = nullptr;
+static Game* g = nullptr;
 
 int main(int argc, char *argv[]) 
 {
-	game = new Game();
-	game->init();
+	g = Game::getInstance();
+	g->init();
 
-	while (game->running())
+	while (g->running())
 	{
-		game->handleEvents();
+		g->handleEvents();
 		// game->update();
-		game->render();
+		g->render();
 	}
 
-	delete game;
 	return 0;
 }

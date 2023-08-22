@@ -28,7 +28,7 @@ public:
 		team_ = team;
 		piece_type_ = piece_type;
 	}
-	~Piece() {}
+	virtual ~Piece() {}
 
 	Position getPosition() { return position_; }
 	void moveTo(Position* pos) { position_.x = pos->x; position_.y = pos->y; }

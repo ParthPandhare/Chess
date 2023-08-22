@@ -16,10 +16,26 @@
 #include "king.h"
 #include "pieceMap.h"
 
-class Game 
+class Game		// SINGLETON CLASS
 {
 public:
-	Game();
+	// deleting copy constructor
+	Game(const Game& obj)
+		= delete;
+
+	static Game* getInstance()
+	{
+		if (instancePtr == NULL)
+		{
+			instancePtr = new Game();
+			return instancePtr;
+		}
+		else
+		{
+			return instancePtr;
+		}
+	}
+
 	~Game();
 
 	void init();
@@ -47,6 +63,31 @@ public:
 	bool isMate(Piece* piece);
 
 private:
+	static Game* instancePtr;
+	Game() 
+	{
+		this->isRunning_ = false;
+		this->left_click_pressed_ = false;
+		this->board_changed_ = true;
+		this->w_castle_king_ = true;
+		this->b_castle_king_ = true;
+		this->w_castle_queen_ = true;
+		this->b_castle_queen_ = true;
+		this->window_ = nullptr;
+		this->renderer_ = nullptr;
+		this->board_image_ = nullptr;
+		this->highlight_image_ = nullptr;
+		this->selected_image_ = nullptr;
+		this->promotion_image_ = nullptr;
+		this->piece_clicked_ = nullptr;
+		this->turn_ = WHITE;
+		this->en_passantable_pawn_ = nullptr;
+		this->w_king_ = nullptr;
+		this->b_king_ = nullptr;
+		for (int i = 0; i < 12; ++i) { this->piece_images_[i] = nullptr; }
+		this->result_ = 0;
+	}
+
 	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
 	int turn_, result_;	// for result_: 0 by default, 1 if black won, -1 if white won
 	SDL_Window* window_;
