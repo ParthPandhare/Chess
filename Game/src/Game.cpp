@@ -21,6 +21,14 @@ Game::~Game()
 	std::cout << "Game Cleaned..." << std::endl;
 }
 
+void Game::setGameMode(int game_mode)
+{
+	this->Game::~Game();
+	this->Game::Game();
+	this->init();
+	this->game_mode_ = game_mode;
+}
+
 void Game::init() 
 {
 	if (!SDL_Init(SDL_INIT_EVERYTHING)) 
@@ -83,6 +91,16 @@ void Game::init()
 }
 
 void Game::handleEvents() 
+{
+	if (game_mode_ == TWO_PLAYER)
+		twoPlayerEventHandling();
+	else if (game_mode_ == ONE_PLAYER_WHITE)
+		onePlayerWhiteEventHandling();
+	else if (game_mode_ == ONE_PLAYER_BLACK)
+		onePlayerBlackEventHandling();
+}
+
+void Game::twoPlayerEventHandling()
 {
 	// checks for mate
 	if (result_ == 0)
@@ -238,6 +256,16 @@ void Game::handleEvents()
 	}
 }
 
+void Game::onePlayerWhiteEventHandling()
+{
+
+}
+
+void Game::onePlayerBlackEventHandling()
+{
+
+}
+
 void Game::update() 
 {
 	// could be cool to have like pieces captured or smthing here
@@ -287,6 +315,44 @@ void Game::render()
 	SDL_RenderPresent(renderer_);
 	board_changed_ = false;
 }
+
+int** Game::getBoardLayout()
+{
+	int** board = new int* [8];
+	for (int x = 0; x < 8; ++x)
+	{
+		board[x] = new int[8];
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] == nullptr)
+				board[x][y] = EMPTY;
+			else
+				board[x][y] = piece_map_[x][y]->getPieceType();
+		}
+	}
+	return board;
+}
+
+std::vector<Move> Game::getPossibleMoves(int team)
+{
+	std::vector<Move> moves;
+	for (int x = 0; x < 8; ++x)
+	{
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != nullptr && piece_map_[x][y]->getTeam() == team)
+			{
+				std::vector<Position> goal_positions = piece_map_[x][y]->getMoves();
+				getLegalMoves(&goal_positions, piece_map_[x][y]);
+				for (Position pos : goal_positions)
+					moves.push_back(Move(Position(x, y), pos));
+			}
+		}
+	}
+}
+
+
+//~~~ HELPER FUNCTIONS ~~~//
 
 void Game::loadImages()
 {

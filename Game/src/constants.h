@@ -15,6 +15,7 @@ namespace constants
 defines for the piece_images_ array to make it easier to access as follows:
 FIRST_SECOND --> COLOR_PIECE
 */
+#define EMPTY -1
 
 #define B_ROOK 0
 #define B_KNIGHT 1
@@ -33,5 +34,10 @@ FIRST_SECOND --> COLOR_PIECE
 /* defines the boolean for team */
 #define WHITE -1
 #define BLACK 1
+
+/* defines gamemodes */
+#define TWO_PLAYER -2
+#define ONE_PLAYER_WHITE -3
+#define ONE_PLAYER_BLACK -4
 
 #endif // !CONSTANTS_H

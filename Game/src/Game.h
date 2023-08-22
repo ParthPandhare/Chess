@@ -16,6 +16,8 @@
 #include "king.h"
 #include "pieceMap.h"
 
+class Move;
+
 class Game		// SINGLETON CLASS
 {
 public:
@@ -23,6 +25,7 @@ public:
 	Game(const Game& obj)
 		= delete;
 
+	// returns the single instance of this class
 	static Game* getInstance()
 	{
 		if (instancePtr == NULL)
@@ -39,28 +42,14 @@ public:
 	~Game();
 
 	void init();
-
 	void handleEvents();
 	void update();
 	void render();
-
 	bool running() { return isRunning_; }
-
-	void loadImages();
-	void renderTexture(SDL_Texture* texture, int x_pos, int y_pos);		// for rendering a single texture of any kind
-	void renderTexture(SDL_Texture* texture, Position pos) { renderTexture(texture, pos.x, pos.y); };
-	void renderBoard();
-	void renderMultiple(SDL_Texture* texture, std::vector<Position> positions);		// renders the given texture to all given squares; useful for highlights
-	void renderPieces();	
-	void getLegalMoves(std::vector<Position>* moves, Piece* piece);
-	void deletePiece(Piece* piece);
-	void resetEnPassants();
-	void promotePiece(Piece* piece);
-	bool isCheck(Piece* target_piece);
-	bool isCheck(Position pos, int team);
-	void canCastle(Piece* piece, std::vector<Position>* moves);
-	bool isLegal(Piece* piece, Position pos);
-	bool isMate(Piece* piece);
+	void setGameMode(int game_mode);
+	int** getBoardLayout();
+	std::vector<Move> getPossibleMoves(int team);
+	
 
 private:
 	static Game* instancePtr;
@@ -86,10 +75,31 @@ private:
 		this->b_king_ = nullptr;
 		for (int i = 0; i < 12; ++i) { this->piece_images_[i] = nullptr; }
 		this->result_ = 0;
+		this->game_mode_ = TWO_PLAYER;
 	}
 
+	void twoPlayerEventHandling();
+	void onePlayerWhiteEventHandling();
+	void onePlayerBlackEventHandling();
+
+	void loadImages();
+	void renderTexture(SDL_Texture* texture, int x_pos, int y_pos);		// for rendering a single texture of any kind
+	void renderTexture(SDL_Texture* texture, Position pos) { renderTexture(texture, pos.x, pos.y); };
+	void renderBoard();
+	void renderMultiple(SDL_Texture* texture, std::vector<Position> positions);		// renders the given texture to all given squares; useful for highlights
+	void renderPieces();
+	void getLegalMoves(std::vector<Position>* moves, Piece* piece);
+	void deletePiece(Piece* piece);
+	void resetEnPassants();
+	void promotePiece(Piece* piece);
+	bool isCheck(Piece* target_piece);
+	bool isCheck(Position pos, int team);
+	void canCastle(Piece* piece, std::vector<Position>* moves);
+	bool isLegal(Piece* piece, Position pos);
+	bool isMate(Piece* piece);
+
 	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
-	int turn_, result_;	// for result_: 0 by default, 1 if black won, -1 if white won
+	int turn_, result_, game_mode_;	// for result_: 0 by default, 1 if black won, -1 if white won
 	SDL_Window* window_;
 	SDL_Renderer* renderer_;
 	SDL_Texture* board_image_;
@@ -101,6 +111,18 @@ private:
 	Piece* en_passantable_pawn_;
 	Piece* w_king_;
 	Piece* b_king_;
+};
+
+struct Move
+{
+	Move() {}
+	Move(Position st, Position go)
+	{
+		this->start = st;
+		this->goal = go;
+	}
+	Position start;
+	Position goal;
 };
 
 #endif
