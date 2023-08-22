@@ -23,6 +23,7 @@ Game::Game()
 	w_king_ = nullptr;
 	b_king_ = nullptr;
 	for (int i = 0; i < 12; ++i) { piece_images_[i] = nullptr; }
+	result_ = 0;
 }
 
 Game::~Game() 
@@ -106,6 +107,27 @@ void Game::init()
 
 void Game::handleEvents() 
 {
+	// checks for mate
+	if (result_ == 0)
+	{
+		if (turn_ == WHITE && isMate(w_king_))
+		{
+			result_ = BLACK;
+			std::cout << "~~~ GAME OVER ~~~" << std::endl;
+			std::cout << "~~~ BLACK WINS ~~~" << std::endl;
+			return;
+		}
+		else if (turn_ == BLACK && isMate(b_king_))
+		{
+			result_ = WHITE;
+			std::cout << "~~~ GAME OVER ~~~" << std::endl;
+			std::cout << "~~~ WHITE WINS ~~~" << std::endl;
+			return;
+		}
+	}
+	else
+		return;
+
 	/* checks for user inputs */
 	SDL_Event event;
 	SDL_PollEvent(&event);
@@ -116,8 +138,8 @@ void Game::handleEvents()
 	{
 		if (event.button.button == SDL_BUTTON_LEFT)
 		{
-			std::cout << "Left click pressed!" << std::endl;
-			SDL_SetWindowMouseGrab(window_, SDL_TRUE);
+			//std::cout << "Left click pressed!" << std::endl;
+			//SDL_SetWindowMouseGrab(window_, SDL_TRUE);
 			Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
 
 			if (left_click_pressed_)
@@ -225,17 +247,17 @@ void Game::handleEvents()
 		}
 		else if (event.button.button == SDL_BUTTON_RIGHT)
 		{
-			std::cout << "Right click pressed!" << std::endl;
+			//std::cout << "Right click pressed!" << std::endl;
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONUP)
 	{
-		std::cout << "Mouse button released!" << std::endl;
-		SDL_SetWindowMouseGrab(window_, SDL_FALSE);
+		//std::cout << "Mouse button released!" << std::endl;
+		//SDL_SetWindowMouseGrab(window_, SDL_FALSE);
 	}
 	else if (event.type == SDL_MOUSEMOTION)
 	{
-		std::cout << event.motion.x << ", " << event.motion.y << std::endl;
+		//std::cout << event.motion.x << ", " << event.motion.y << std::endl;
 	}
 }
 
@@ -246,6 +268,18 @@ void Game::update()
 
 void Game::render() 
 {
+	// if it's checkmate
+	if (result_ != 0)
+	{
+		SDL_Event event;
+		SDL_PollEvent(&event);
+		if (event.type == SDL_QUIT)
+		{
+			isRunning_ = false;
+		}
+		return;
+	}
+
 	// if the board is the same, nothing needs to be done
 	if (!board_changed_)
 		return;
@@ -534,4 +568,27 @@ bool Game::isLegal(Piece* piece, Position pos)
 		piece_map_[pos.x][pos.y] = nullptr;
 
 	return is_legal;
+}
+
+bool Game::isMate(Piece* piece)
+{
+	int team = piece->getTeam();
+	if (isCheck(piece))
+	{
+		for (int x = 0; x < 8; ++x)
+		{
+			for (int y = 0; y < 8; ++y)
+			{
+				if (piece_map_[x][y] != nullptr && piece_map_[x][y]->getTeam() == team)
+				{
+					std::vector<Position> moves = piece_map_[x][y]->getMoves();
+					getLegalMoves(&moves, piece_map_[x][y]);
+					if (!moves.empty())
+						return false;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
 }

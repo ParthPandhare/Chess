@@ -44,10 +44,11 @@ public:
 	bool isCheck(Position pos, int team);
 	void canCastle(Piece* piece, std::vector<Position>* moves);
 	bool isLegal(Piece* piece, Position pos);
+	bool isMate(Piece* piece);
 
 private:
 	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
-	int turn_;
+	int turn_, result_;	// for result_: 0 by default, 1 if black won, -1 if white won
 	SDL_Window* window_;
 	SDL_Renderer* renderer_;
 	SDL_Texture* board_image_;
