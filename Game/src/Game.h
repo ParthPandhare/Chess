@@ -15,8 +15,7 @@
 #include "queen.h"
 #include "king.h"
 #include "pieceMap.h"
-
-class Move;
+#include "minimax.h"
 
 class Game		// SINGLETON CLASS
 {
@@ -47,6 +46,7 @@ public:
 	void render();
 	bool running() { return isRunning_; }
 	void setGameMode(int game_mode);
+
 	int** getBoardLayout();
 	std::vector<Move> getPossibleMoves(int team);
 	
@@ -111,18 +111,6 @@ private:
 	Piece* en_passantable_pawn_;
 	Piece* w_king_;
 	Piece* b_king_;
-};
-
-struct Move
-{
-	Move() {}
-	Move(Position st, Position go)
-	{
-		this->start = st;
-		this->goal = go;
-	}
-	Position start;
-	Position goal;
 };
 
 #endif

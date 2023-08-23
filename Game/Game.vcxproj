@@ -136,6 +136,7 @@
     <ClCompile Include="Src\king.cpp" />
     <ClCompile Include="Src\knight.cpp" />
     <ClCompile Include="Src\main.cpp" />
+    <ClCompile Include="src\minimax.cpp" />
     <ClCompile Include="Src\pawn.cpp" />
     <ClCompile Include="Src\queen.cpp" />
     <ClCompile Include="Src\rook.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Src\Game.h" />
     <ClInclude Include="Src\king.h" />
     <ClInclude Include="Src\knight.h" />
+    <ClInclude Include="src\minimax.h" />
     <ClInclude Include="Src\pawn.h" />
     <ClInclude Include="Src\piece.h" />
     <ClInclude Include="Src\pieceMap.h" />

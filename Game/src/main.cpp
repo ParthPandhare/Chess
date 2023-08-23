@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
 {
 	g = Game::getInstance();
 	g->init();
+	g->setGameMode(ONE_PLAYER_WHITE);
 
 	while (g->running())
 	{
