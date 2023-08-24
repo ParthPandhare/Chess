@@ -219,7 +219,12 @@ void Game::onePlayerEventHandling()
 		Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(game_mode_ + 4), game_mode_ + 4);
 		std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
 		piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
-		this->move(&computer_move);
+		
+		// for promotions:
+		if ((piece_clicked_->getPieceType() == W_PAWN && computer_move.goal.y == 0) || (piece_clicked_->getPieceType() == B_PAWN && computer_move.goal.y == 7))
+			moveWithPromotion(&computer_move, W_QUEEN);
+		else
+			this->move(&computer_move);
 		piece_clicked_ = nullptr;
 		board_changed_ = true;
 	}
@@ -391,6 +396,87 @@ void Game::move(Move* move)
 			{
 				Position temp(pos.x - 1, pos.y);
 				piece_map_[7][7]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[7][7];
+				piece_map_[7][7] = nullptr;
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][7]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[0][7];
+				piece_map_[0][7] = nullptr;
+			}
+			w_castle_king_ = false;
+			w_castle_queen_ = false;
+		}
+		else if (w_castle_king_ && piece_map_[7][7] != nullptr && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
+			w_castle_king_ = false;
+		else if (w_castle_king_ && piece_map_[0][7] != nullptr && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
+			w_castle_queen_ = false;
+	}
+	else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
+	{
+		if (piece_clicked_ == b_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if it castled kingside
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][0]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[7][0];
+				piece_map_[7][0] = nullptr;
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][0]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[0][0];
+				piece_map_[0][0] = nullptr;
+			}
+			b_castle_king_ = false;
+			b_castle_queen_ = false;
+		}
+		else if (b_castle_king_ && piece_map_[7][0] != nullptr && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
+			b_castle_king_ = false;
+		else if (b_castle_king_ && piece_map_[0][0] != nullptr && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
+			b_castle_queen_ = false;
+	}
+
+	// check for promotion
+	if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
+		promotePiece(piece_clicked_);
+
+	// change turn
+	turn_ *= -1;
+}
+
+void Game::moveWithPromotion(Move* move, int promoted_piece)
+{
+	Position old_position = move->start;
+	piece_map_[old_position.x][old_position.y] = nullptr;
+	int piece_type = piece_clicked_->getPieceType();
+	Position pos = move->goal;
+
+	// DELETE PIECE IF CAPTURED
+	if (checkPiece(&pos))
+		deletePiece(piece_map_[pos.x][pos.y]);
+
+	// resets en passants
+	resetEnPassants();
+
+	// actually move the piece
+	assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
+	piece_map_[pos.x][pos.y] = piece_clicked_;
+	piece_clicked_->moveTo(&pos);
+
+	// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
+	if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
+	{
+		if (piece_clicked_ == w_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if-elses move rook if needed
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][7]->moveTo(&temp);
 			}
 			else if (pos.x - old_position.x == -2)
 			{
@@ -428,9 +514,33 @@ void Game::move(Move* move)
 			b_castle_queen_ = false;
 	}
 
-	// check for promotion
-	if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
-		promotePiece(piece_clicked_);
+	// promote the piece
+	switch (promoted_piece)
+	{
+	case B_QUEEN:
+	case W_QUEEN:
+		delete piece_map_[pos.x][pos.y];
+		piece_map_[pos.x][pos.y] = new Queen(pos.x, pos.y, turn_);
+		break;
+	case B_BISHOP:
+	case W_BISHOP:
+		delete piece_map_[pos.x][pos.y];
+		piece_map_[pos.x][pos.y] = new Bishop(pos.x, pos.y, turn_);
+		break;
+	case B_KNIGHT:
+	case W_KNIGHT:
+		delete piece_map_[pos.x][pos.y];
+		piece_map_[pos.x][pos.y] = new Knight(pos.x, pos.y, turn_);
+		break;
+	case B_ROOK:
+	case W_ROOK:
+		delete piece_map_[pos.x][pos.y];
+		piece_map_[pos.x][pos.y] = new Rook(pos.x, pos.y, turn_);
+		break;
+	default:
+		std::cout << "ERROR WITH PROMOTION IN FUNCTION moveWithPromotion" << std::endl;
+		assert(false);
+	}
 
 	// change turn
 	turn_ *= -1;

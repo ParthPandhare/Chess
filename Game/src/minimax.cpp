@@ -15,6 +15,11 @@ Move Minimax::getMove(int** boardLayout, std::vector<Move> moves, int team)
 		goal_square = boardLayout[move.goal.x][move.goal.y];
 		boardLayout[move.start.x][move.start.y] = EMPTY;
 		boardLayout[move.goal.x][move.goal.y] = start_square;
+
+		// if promoting:
+		if ((start_square == W_PAWN && move.goal.y == 0) || (start_square == B_PAWN && move.goal.y == 7))
+			boardLayout[move.goal.x][move.goal.y] = 6 - 3 * team;
+
 		int current_eval = getEvaluation(boardLayout);
 		if ((team == WHITE && current_eval > best_eval) || (team == BLACK && current_eval < best_eval))
 		{
