@@ -95,9 +95,9 @@ void Game::handleEvents()
 	if (game_mode_ == TWO_PLAYER)
 		twoPlayerEventHandling();
 	else if (game_mode_ == ONE_PLAYER_WHITE)
-		onePlayerWhiteEventHandling();
+		onePlayerEventHandling();
 	else if (game_mode_ == ONE_PLAYER_BLACK)
-		onePlayerBlackEventHandling();
+		onePlayerEventHandling();
 }
 
 void Game::twoPlayerEventHandling()
@@ -152,82 +152,9 @@ void Game::twoPlayerEventHandling()
 				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 				if (itr != moves.end())
 				{
-					Position old_position = piece_clicked_->getPosition();
-					piece_map_[old_position.x][old_position.y] = nullptr;
-					int piece_type = piece_clicked_->getPieceType();
-
-					// DELETE PIECE IF CAPTURED
-					if (checkPiece(&pos))
-						deletePiece(piece_map_[pos.x][pos.y]);
-					// delete piece if captured using en passant
-					else if (piece_type == W_PAWN && piece_clicked_->getPosition().y == 3 && checkEnpassantablePawn(pos.x, pos.y + 1, WHITE))
-						deletePiece(piece_map_[pos.x][pos.y + 1]);
-					else if (piece_type == B_PAWN && piece_clicked_->getPosition().y == 4 && checkEnpassantablePawn(pos.x, pos.y - 1, BLACK))
-						deletePiece(piece_map_[pos.x][pos.y - 1]);
-
-					// sets enpassants after resetting the previous ones
-					resetEnPassants();
-					if ((piece_type == W_PAWN || piece_type == B_PAWN) &&
-						(pos.y - piece_clicked_->getPosition().y) * piece_clicked_->getTeam() == 2)
-						piece_clicked_->setEnpassantAble(true);
-
-					// actually move the piece
-					assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
-					piece_map_[pos.x][pos.y] = piece_clicked_;
-					piece_clicked_->moveTo(&pos);
-
-					// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
-					if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
-					{
-						if (piece_clicked_ == w_king_)
-						{
-							if (pos.x - old_position.x == 2)	// if-elses move rook if needed
-							{
-								Position temp(pos.x - 1, pos.y);
-								piece_map_[7][7]->moveTo(&temp);
-							}
-							else if (pos.x - old_position.x == -2)
-							{
-								Position temp(pos.x + 1, pos.y);
-								piece_map_[0][7]->moveTo(&temp);
-							}
-							w_castle_king_ = false;
-							w_castle_queen_ = false;
-						}
-						else if (w_castle_king_ && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
-							w_castle_king_ = false;
-						else if (w_castle_king_ && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
-							w_castle_queen_ = false;
-					}
-					else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
-					{
-						if (piece_clicked_ == b_king_)
-						{
-							if (pos.x - old_position.x == 2)	// if it castled kingside
-							{
-								Position temp(pos.x - 1, pos.y);
-								piece_map_[7][0]->moveTo(&temp);
-							}
-							else if (pos.x - old_position.x == -2)
-							{
-								Position temp(pos.x + 1, pos.y);
-								piece_map_[0][0]->moveTo(&temp);
-							}
-							b_castle_king_ = false;
-							b_castle_queen_ = false;
-						}
-						else if (b_castle_king_ && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
-							b_castle_king_ = false;
-						else if (b_castle_king_ && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
-							b_castle_queen_ = false;
-					}
-
-					// check for promotion
-					if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
-						promotePiece(piece_clicked_);
-
-					// change turn
-					turn_ *= -1;
+					Position start = piece_clicked_->getPosition();
+					Move mv(start, pos);
+					this->move(&mv);
 				}
 				board_changed_ = true;
 				left_click_pressed_ = false;
@@ -256,7 +183,7 @@ void Game::twoPlayerEventHandling()
 	}
 }
 
-void Game::onePlayerWhiteEventHandling()
+void Game::onePlayerEventHandling()
 {
 	// checks for mate
 	if (result_ == 0)
@@ -279,25 +206,26 @@ void Game::onePlayerWhiteEventHandling()
 	else
 		return;
 
-	// if it's the computer's turn:
-	if (turn_ == BLACK)
-	{
-		Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(BLACK), BLACK);
-		std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
-
-		turn_ *= -1;
-	}
-
-	/* checks for user inputs & acts on it */
+	/* checks for user inputs */
 	SDL_Event event;
 	SDL_WaitEvent(&event);
 
 	if (event.type == SDL_QUIT)
 		isRunning_ = false;
-	else if (turn_ == WHITE && event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+
+	// if it's the computer's turn:
+	if (turn_ == game_mode_ + 4)
 	{
-		//std::cout << "Left click pressed!" << std::endl;
-			//SDL_SetWindowMouseGrab(window_, SDL_TRUE);
+		Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(game_mode_ + 4), game_mode_ + 4);
+		std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
+		piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
+		this->move(&computer_move);
+		piece_clicked_ = nullptr;
+		board_changed_ = true;
+	}
+	// if it's the user's turn:
+	else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+	{
 		Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
 
 		if (left_click_pressed_)
@@ -315,82 +243,9 @@ void Game::onePlayerWhiteEventHandling()
 			std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
 			if (itr != moves.end())
 			{
-				Position old_position = piece_clicked_->getPosition();
-				piece_map_[old_position.x][old_position.y] = nullptr;
-				int piece_type = piece_clicked_->getPieceType();
-
-				// DELETE PIECE IF CAPTURED
-				if (checkPiece(&pos))
-					deletePiece(piece_map_[pos.x][pos.y]);
-				// delete piece if captured using en passant
-				else if (piece_type == W_PAWN && piece_clicked_->getPosition().y == 3 && checkEnpassantablePawn(pos.x, pos.y + 1, WHITE))
-					deletePiece(piece_map_[pos.x][pos.y + 1]);
-				else if (piece_type == B_PAWN && piece_clicked_->getPosition().y == 4 && checkEnpassantablePawn(pos.x, pos.y - 1, BLACK))
-					deletePiece(piece_map_[pos.x][pos.y - 1]);
-
-				// sets enpassants after resetting the previous ones
-				resetEnPassants();
-				if ((piece_type == W_PAWN || piece_type == B_PAWN) &&
-					(pos.y - piece_clicked_->getPosition().y) * piece_clicked_->getTeam() == 2)
-					piece_clicked_->setEnpassantAble(true);
-
-				// actually move the piece
-				assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
-				piece_map_[pos.x][pos.y] = piece_clicked_;
-				piece_clicked_->moveTo(&pos);
-
-				// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
-				if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
-				{
-					if (piece_clicked_ == w_king_)
-					{
-						if (pos.x - old_position.x == 2)	// if-elses move rook if needed
-						{
-							Position temp(pos.x - 1, pos.y);
-							piece_map_[7][7]->moveTo(&temp);
-						}
-						else if (pos.x - old_position.x == -2)
-						{
-							Position temp(pos.x + 1, pos.y);
-							piece_map_[0][7]->moveTo(&temp);
-						}
-						w_castle_king_ = false;
-						w_castle_queen_ = false;
-					}
-					else if (w_castle_king_ && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
-						w_castle_king_ = false;
-					else if (w_castle_king_ && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
-						w_castle_queen_ = false;
-				}
-				else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
-				{
-					if (piece_clicked_ == b_king_)
-					{
-						if (pos.x - old_position.x == 2)	// if it castled kingside
-						{
-							Position temp(pos.x - 1, pos.y);
-							piece_map_[7][0]->moveTo(&temp);
-						}
-						else if (pos.x - old_position.x == -2)
-						{
-							Position temp(pos.x + 1, pos.y);
-							piece_map_[0][0]->moveTo(&temp);
-						}
-						b_castle_king_ = false;
-						b_castle_queen_ = false;
-					}
-					else if (b_castle_king_ && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
-						b_castle_king_ = false;
-					else if (b_castle_king_ && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
-						b_castle_queen_ = false;
-				}
-
-				// check for promotion
-				if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
-					promotePiece(piece_clicked_);
-
-				// change turn
-				turn_ *= -1;
+				Position start = piece_clicked_->getPosition();
+				Move mv(start, pos);
+				this->move(&mv);
 			}
 			board_changed_ = true;
 			left_click_pressed_ = false;
@@ -403,11 +258,6 @@ void Game::onePlayerWhiteEventHandling()
 			piece_clicked_ = piece_map_[pos.x][pos.y];
 		}
 	}
-}
-
-void Game::onePlayerBlackEventHandling()
-{
-
 }
 
 void Game::update() 
@@ -504,6 +354,87 @@ std::vector<Move> Game::getPossibleMoves(int team)
 
 
 //~~~ HELPER FUNCTIONS ~~~//
+
+void Game::move(Move* move)
+{
+	Position old_position = move->start;
+	piece_map_[old_position.x][old_position.y] = nullptr;
+	int piece_type = piece_clicked_->getPieceType();
+	Position pos = move->goal;
+
+	// DELETE PIECE IF CAPTURED
+	if (checkPiece(&pos))
+		deletePiece(piece_map_[pos.x][pos.y]);
+	// delete piece if captured using en passant
+	else if (piece_type == W_PAWN && piece_clicked_->getPosition().y == 3 && checkEnpassantablePawn(pos.x, pos.y + 1, WHITE))
+		deletePiece(piece_map_[pos.x][pos.y + 1]);
+	else if (piece_type == B_PAWN && piece_clicked_->getPosition().y == 4 && checkEnpassantablePawn(pos.x, pos.y - 1, BLACK))
+		deletePiece(piece_map_[pos.x][pos.y - 1]);
+
+	// sets enpassants after resetting the previous ones
+	resetEnPassants();
+	if ((piece_type == W_PAWN || piece_type == B_PAWN) &&
+		(pos.y - piece_clicked_->getPosition().y) * piece_clicked_->getTeam() == 2)
+		piece_clicked_->setEnpassantAble(true);
+
+	// actually move the piece
+	assert(!piece_map_[pos.x][pos.y]);	// makes sure the square you're trying to move to is empty (the piece there should be deleted first)
+	piece_map_[pos.x][pos.y] = piece_clicked_;
+	piece_clicked_->moveTo(&pos);
+
+	// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
+	if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
+	{
+		if (piece_clicked_ == w_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if-elses move rook if needed
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][7]->moveTo(&temp);
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][7]->moveTo(&temp);
+			}
+			w_castle_king_ = false;
+			w_castle_queen_ = false;
+		}
+		else if (w_castle_king_ && piece_map_[7][7] != nullptr && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
+			w_castle_king_ = false;
+		else if (w_castle_king_ && piece_map_[0][7] != nullptr && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
+			w_castle_queen_ = false;
+	}
+	else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
+	{
+		if (piece_clicked_ == b_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if it castled kingside
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][0]->moveTo(&temp);
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][0]->moveTo(&temp);
+			}
+			b_castle_king_ = false;
+			b_castle_queen_ = false;
+		}
+		else if (b_castle_king_ && piece_map_[7][0] != nullptr && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
+			b_castle_king_ = false;
+		else if (b_castle_king_ && piece_map_[0][0] != nullptr && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
+			b_castle_queen_ = false;
+	}
+
+	// check for promotion
+	if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
+		promotePiece(piece_clicked_);
+
+	// change turn
+	turn_ *= -1;
+}
 
 void Game::loadImages()
 {

@@ -79,8 +79,7 @@ private:
 	}
 
 	void twoPlayerEventHandling();
-	void onePlayerWhiteEventHandling();
-	void onePlayerBlackEventHandling();
+	void onePlayerEventHandling();
 
 	void loadImages();
 	void renderTexture(SDL_Texture* texture, int x_pos, int y_pos);		// for rendering a single texture of any kind
@@ -97,6 +96,7 @@ private:
 	void canCastle(Piece* piece, std::vector<Position>* moves);
 	bool isLegal(Piece* piece, Position pos);
 	bool isMate(Piece* piece);
+	void move(Move* move);
 
 	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
 	int turn_, result_, game_mode_;	// for result_: 0 by default, 1 if black won, -1 if white won

@@ -56,7 +56,7 @@ FIRST_SECOND --> COLOR_PIECE
 
 /* defines gamemodes */
 #define TWO_PLAYER -2
+#define ONE_PLAYER_BLACK -5
 #define ONE_PLAYER_WHITE -3
-#define ONE_PLAYER_BLACK -4
 
 #endif // !CONSTANTS_H
