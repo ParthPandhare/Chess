@@ -104,83 +104,14 @@ void Game::twoPlayerEventHandling()
 {
 	// checks for mate
 	if (result_ == 0)
-	{
-		if (turn_ == WHITE && isMate(w_king_))
-		{
-			result_ = BLACK;
-			std::cout << "~~~ GAME OVER ~~~" << std::endl;
-			std::cout << "~~~ BLACK WINS ~~~" << std::endl;
-			return;
-		}
-		else if (turn_ == BLACK && isMate(b_king_))
-		{
-			result_ = WHITE;
-			std::cout << "~~~ GAME OVER ~~~" << std::endl;
-			std::cout << "~~~ WHITE WINS ~~~" << std::endl;
-			return;
-		}
-	}
+		setCheckMate();
 	else
 		return;
 
-	/* checks for user inputs */
+	/* checks for user inputs & handles them */
 	SDL_Event event;
 	SDL_WaitEvent(&event);
-
-	if (event.type == SDL_QUIT)
-		isRunning_ = false;
-	else if (event.type == SDL_MOUSEBUTTONDOWN)
-	{
-		if (event.button.button == SDL_BUTTON_LEFT)
-		{
-			//std::cout << "Left click pressed!" << std::endl;
-			//SDL_SetWindowMouseGrab(window_, SDL_TRUE);
-			Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
-
-			if (left_click_pressed_)
-			{
-				// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
-				std::vector<Position> moves = piece_clicked_->getMoves();
-				getLegalMoves(&moves, piece_clicked_);
-
-				// adds castling moves if possible:
-				if (piece_clicked_ == w_king_)
-					canCastle(w_king_, &moves);
-				else if (piece_clicked_ == b_king_)
-					canCastle(b_king_, &moves);
-
-				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
-				if (itr != moves.end())
-				{
-					Position start = piece_clicked_->getPosition();
-					Move mv(start, pos);
-					this->move(&mv);
-				}
-				board_changed_ = true;
-				left_click_pressed_ = false;
-				piece_clicked_ = nullptr;
-			}
-			else if (piece_map_[pos.x][pos.y] != nullptr && piece_map_[pos.x][pos.y]->getTeam() == turn_)	// only allow people to move on their turn
-			{
-				board_changed_ = true;
-				left_click_pressed_ = true;
-				piece_clicked_ = piece_map_[pos.x][pos.y];
-			}
-		}
-		else if (event.button.button == SDL_BUTTON_RIGHT)
-		{
-			//std::cout << "Right click pressed!" << std::endl;
-		}
-	}
-	else if (event.type == SDL_MOUSEBUTTONUP)
-	{
-		//std::cout << "Mouse button released!" << std::endl;
-		//SDL_SetWindowMouseGrab(window_, SDL_FALSE);
-	}
-	else if (event.type == SDL_MOUSEMOTION)
-	{
-		//std::cout << event.motion.x << ", " << event.motion.y << std::endl;
-	}
+	handleUserInput(event);
 }
 
 void Game::onePlayerEventHandling()
@@ -188,20 +119,9 @@ void Game::onePlayerEventHandling()
 	// checks for mate
 	if (result_ == 0)
 	{
-		if (turn_ == WHITE && isMate(w_king_))
-		{
-			result_ = BLACK;
-			std::cout << "~~~ GAME OVER ~~~" << std::endl;
-			std::cout << "~~~ BLACK WINS ~~~" << std::endl;
+		setCheckMate();
+		if (result_ != 0)
 			return;
-		}
-		else if (turn_ == BLACK && isMate(b_king_))
-		{
-			result_ = WHITE;
-			std::cout << "~~~ GAME OVER ~~~" << std::endl;
-			std::cout << "~~~ WHITE WINS ~~~" << std::endl;
-			return;
-		}
 	}
 	else
 		return;
@@ -215,54 +135,10 @@ void Game::onePlayerEventHandling()
 
 	// if it's the computer's turn:
 	if (turn_ == game_mode_ + 4)
-	{
-		Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(game_mode_ + 4), game_mode_ + 4);
-		std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
-		piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
-		
-		// for promotions:
-		if ((piece_clicked_->getPieceType() == W_PAWN && computer_move.goal.y == 0) || (piece_clicked_->getPieceType() == B_PAWN && computer_move.goal.y == 7))
-			moveWithPromotion(&computer_move, W_QUEEN);
-		else
-			this->move(&computer_move);
-		piece_clicked_ = nullptr;
-		board_changed_ = true;
-	}
+		handleMinimaxMove();
 	// if it's the user's turn:
-	else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
-	{
-		Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
-
-		if (left_click_pressed_)
-		{
-			// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
-			std::vector<Position> moves = piece_clicked_->getMoves();
-			getLegalMoves(&moves, piece_clicked_);
-
-			// adds castling moves if possible:
-			if (piece_clicked_ == w_king_)
-				canCastle(w_king_, &moves);
-			else if (piece_clicked_ == b_king_)
-				canCastle(b_king_, &moves);
-
-			std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
-			if (itr != moves.end())
-			{
-				Position start = piece_clicked_->getPosition();
-				Move mv(start, pos);
-				this->move(&mv);
-			}
-			board_changed_ = true;
-			left_click_pressed_ = false;
-			piece_clicked_ = nullptr;
-		}
-		else if (piece_map_[pos.x][pos.y] != nullptr && piece_map_[pos.x][pos.y]->getTeam() == turn_)	// only allow people to move on their turn
-		{
-			board_changed_ = true;
-			left_click_pressed_ = true;
-			piece_clicked_ = piece_map_[pos.x][pos.y];
-		}
-	}
+	else
+		handleUserInput(event);
 }
 
 void Game::update() 
@@ -357,6 +233,12 @@ std::vector<Move> Game::getPossibleMoves(int team)
 	return moves;
 }
 
+std::vector<Move> Game::getPossibleMoves(int** board_layout, int team)
+{
+	std::vector<Move> moves;
+	return moves;
+}
+
 
 //~~~ HELPER FUNCTIONS ~~~//
 
@@ -447,6 +329,97 @@ void Game::move(Move* move)
 
 	// change turn
 	turn_ *= -1;
+}
+
+void Game::handleUserInput(SDL_Event event)
+{
+	if (event.type == SDL_QUIT)
+		isRunning_ = false;
+	else if (event.type == SDL_MOUSEBUTTONDOWN)
+	{
+		if (event.button.button == SDL_BUTTON_LEFT)
+		{
+			//std::cout << "Left click pressed!" << std::endl;
+			//SDL_SetWindowMouseGrab(window_, SDL_TRUE);
+			Position pos(event.button.x / constants::SQUARE_DIMENSION, event.button.y / constants::SQUARE_DIMENSION);
+
+			if (left_click_pressed_)
+			{
+				// checks to see if the user wants to move the piece based on where they click & gets rid of illegal moves
+				std::vector<Position> moves = piece_clicked_->getMoves();
+				getLegalMoves(&moves, piece_clicked_);
+
+				// adds castling moves if possible:
+				if (piece_clicked_ == w_king_)
+					canCastle(w_king_, &moves);
+				else if (piece_clicked_ == b_king_)
+					canCastle(b_king_, &moves);
+
+				std::vector<Position>::iterator itr = std::find(moves.begin(), moves.end(), pos);
+				if (itr != moves.end())
+				{
+					Position start = piece_clicked_->getPosition();
+					Move mv(start, pos);
+					this->move(&mv);
+				}
+				board_changed_ = true;
+				left_click_pressed_ = false;
+				piece_clicked_ = nullptr;
+			}
+			else if (piece_map_[pos.x][pos.y] != nullptr && piece_map_[pos.x][pos.y]->getTeam() == turn_)	// only allow people to move on their turn
+			{
+				board_changed_ = true;
+				left_click_pressed_ = true;
+				piece_clicked_ = piece_map_[pos.x][pos.y];
+			}
+		}
+		else if (event.button.button == SDL_BUTTON_RIGHT)
+		{
+			//std::cout << "Right click pressed!" << std::endl;
+		}
+	}
+	else if (event.type == SDL_MOUSEBUTTONUP)
+	{
+		//std::cout << "Mouse button released!" << std::endl;
+		//SDL_SetWindowMouseGrab(window_, SDL_FALSE);
+	}
+	else if (event.type == SDL_MOUSEMOTION)
+	{
+		//std::cout << event.motion.x << ", " << event.motion.y << std::endl;
+	}
+}
+
+void Game::handleMinimaxMove()
+{
+	Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(game_mode_ + 4), game_mode_ + 4);
+	std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
+	piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
+
+	// for promotions:
+	if ((piece_clicked_->getPieceType() == W_PAWN && computer_move.goal.y == 0) || (piece_clicked_->getPieceType() == B_PAWN && computer_move.goal.y == 7))
+		moveWithPromotion(&computer_move, W_QUEEN);
+	else
+		this->move(&computer_move);
+	piece_clicked_ = nullptr;
+	board_changed_ = true;
+}
+
+void Game::setCheckMate()
+{
+	if (turn_ == WHITE && isMate(w_king_))
+	{
+		result_ = BLACK;
+		std::cout << "~~~ GAME OVER ~~~" << std::endl;
+		std::cout << "~~~ BLACK WINS ~~~" << std::endl;
+		return;
+	}
+	else if (turn_ == BLACK && isMate(b_king_))
+	{
+		result_ = WHITE;
+		std::cout << "~~~ GAME OVER ~~~" << std::endl;
+		std::cout << "~~~ WHITE WINS ~~~" << std::endl;
+		return;
+	}
 }
 
 void Game::moveWithPromotion(Move* move, int promoted_piece)

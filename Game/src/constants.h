@@ -17,14 +17,14 @@ namespace weights
 
 	const int ROOK_W = 50;
 	const int KNIGHT_W = 30;
-	const int BISHOP_W = 35;
+	const int BISHOP_W = 30;
 	const int KING_W = 900;
 	const int QUEEN_W = 90;
 	const int PAWN_W = 10;
 
 	const int ROOK_B = -50;
 	const int KNIGHT_B = -30;
-	const int BISHOP_B = -35;
+	const int BISHOP_B = -30;
 	const int KING_B = -900;
 	const int QUEEN_B = -90;
 	const int PAWN_B = -10;

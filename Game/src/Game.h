@@ -49,6 +49,7 @@ public:
 
 	int** getBoardLayout();
 	std::vector<Move> getPossibleMoves(int team);
+	std::vector<Move> getPossibleMoves(int** board_layout, int team);
 	
 
 private:
@@ -98,6 +99,9 @@ private:
 	bool isMate(Piece* piece);
 	void move(Move* move);
 	void moveWithPromotion(Move* move, int promoted_piece);
+	void setCheckMate();
+	void handleUserInput(SDL_Event event);
+	void handleMinimaxMove();
 
 	bool isRunning_, left_click_pressed_, board_changed_, w_castle_king_, w_castle_queen_, b_castle_king_, b_castle_queen_;
 	int turn_, result_, game_mode_;	// for result_: 0 by default, 1 if black won, -1 if white won

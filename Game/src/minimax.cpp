@@ -8,6 +8,7 @@ Move Minimax::getMove(int** boardLayout, std::vector<Move> moves, int team)
 	int best_eval = 0x7FFFFFFF * team;
 	int start_square = EMPTY;
 	int goal_square = EMPTY;
+	int en_passant_square = EMPTY;
 
 	for (Move move : moves)
 	{
@@ -20,6 +21,14 @@ Move Minimax::getMove(int** boardLayout, std::vector<Move> moves, int team)
 		if ((start_square == W_PAWN && move.goal.y == 0) || (start_square == B_PAWN && move.goal.y == 7))
 			boardLayout[move.goal.x][move.goal.y] = 6 - 3 * team;
 
+		// if en passanting:
+		if (((start_square == W_PAWN && move.start.y == 3) || (start_square == B_PAWN && move.start.y == 4)) &&
+			goal_square == EMPTY && move.start.x != move.goal.x)
+		{
+			en_passant_square = boardLayout[move.goal.x][move.goal.y - team];
+			boardLayout[move.goal.x][move.goal.y - team] = EMPTY;
+		}
+
 		int current_eval = getEvaluation(boardLayout);
 		if ((team == WHITE && current_eval > best_eval) || (team == BLACK && current_eval < best_eval))
 		{
@@ -28,6 +37,11 @@ Move Minimax::getMove(int** boardLayout, std::vector<Move> moves, int team)
 		}
 		boardLayout[move.start.x][move.start.y] = start_square;
 		boardLayout[move.goal.x][move.goal.y] = goal_square;
+		if (en_passant_square != EMPTY)
+		{
+			boardLayout[move.goal.x][move.goal.y - team] = en_passant_square;
+			en_passant_square = EMPTY;
+		}
 	}
 
 	return best_move;
