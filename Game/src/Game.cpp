@@ -177,6 +177,10 @@ void Game::render()
 		else if (piece_clicked_ == b_king_)
 			canCastle(b_king_, &moves);
 		getLegalMoves(&moves, piece_clicked_);
+
+		/*for (int i = 0; i < moves.size(); ++i)
+			std::cout << moves[i].x << ", " << moves[i].y << std::endl;*/
+
 		renderMultiple(highlight_image_, moves);
 		renderTexture(selected_image_, piece_clicked_->getPosition());
 	}
@@ -233,9 +237,61 @@ std::vector<Move> Game::getPossibleMoves(int team)
 	return moves;
 }
 
-std::vector<Move> Game::getPossibleMoves(int** board_layout, int team)
+std::vector<Move> Game::getPossibleMovesAfterMove(std::vector<Move>* moves_to_play)
 {
-	std::vector<Move> moves;
+	if (moves_to_play->empty())
+		return getPossibleMoves(turn_);
+
+	// stores old variables:
+	bool first_move[8][8] = { false };
+	int old_w_kingside = w_castle_king_;
+	int old_w_queenside = w_castle_queen_;
+	int old_b_kingside = b_castle_king_;
+	int old_b_queenside = b_castle_queen_;
+	int old_turn = turn_;
+	Piece* old_piece_map[8][8] = { nullptr };
+	for (int x = 0; x < 8; ++x)
+	{
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != nullptr)
+			{
+				old_piece_map[x][y] = piece_map_[x][y];
+				if (piece_map_[x][y]->isFirstMove())
+					first_move[x][y] = true;
+			}
+		}
+	}
+	
+	for (int i = 0; i < moves_to_play->size(); ++i)
+		moveWithoutDeleting(&(*moves_to_play)[i]);
+
+	std::vector<Move> moves = getPossibleMoves(turn_);
+
+	// restores old variables
+	for (int x = 0; x < 8; ++x)
+	{
+		for (int y = 0; y < 8; ++y)
+		{
+			if (piece_map_[x][y] != old_piece_map[x][y])
+			{
+				piece_map_[x][y] = old_piece_map[x][y];
+				if (piece_map_[x][y] != nullptr)
+				{
+					Position pos(x, y);
+					piece_map_[x][y]->moveTo(&pos);
+					if (first_move[x][y])
+						piece_map_[x][y]->resetFirstMove();
+				}
+			}
+		}
+	}
+	w_castle_king_ = old_w_kingside;
+	w_castle_queen_ = old_w_queenside;
+	b_castle_king_ = old_b_kingside;
+	b_castle_queen_ = old_b_queenside;
+	turn_ = old_turn;
+
 	return moves;
 }
 
@@ -331,6 +387,86 @@ void Game::move(Move* move)
 	turn_ *= -1;
 }
 
+void Game::moveWithoutDeleting(Move* move)
+{
+	Position old_position = move->start;
+	Piece* piece_selected = piece_map_[old_position.x][old_position.y];
+	piece_map_[old_position.x][old_position.y] = nullptr;
+	int piece_type = piece_selected->getPieceType();
+	Position pos = move->goal;
+
+	// sets enpassants after resetting the previous ones
+	resetEnPassants();
+	if ((piece_type == W_PAWN || piece_type == B_PAWN) &&
+		(pos.y - piece_selected->getPosition().y) * piece_selected->getTeam() == 2)
+		piece_selected->setEnpassantAble(true);
+
+	// actually move the piece
+	piece_map_[pos.x][pos.y] = piece_selected;
+	piece_selected->moveTo(&pos);
+
+	// move rook if castled & set castling rights (if rook or king moves, set castling rights to false for that side)
+	if (turn_ == WHITE && (w_castle_king_ || w_castle_queen_))
+	{
+		if (piece_clicked_ == w_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if-elses move rook if needed
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][7]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[7][7];
+				piece_map_[7][7] = nullptr;
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][7]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[0][7];
+				piece_map_[0][7] = nullptr;
+			}
+			w_castle_king_ = false;
+			w_castle_queen_ = false;
+		}
+		else if (w_castle_king_ && piece_map_[7][7] != nullptr && (piece_clicked_ == piece_map_[7][7] || piece_map_[7][7]->getPieceType() != W_ROOK))
+			w_castle_king_ = false;
+		else if (w_castle_king_ && piece_map_[0][7] != nullptr && (piece_clicked_ == piece_map_[0][7] || piece_map_[0][7]->getPieceType() != W_ROOK))
+			w_castle_queen_ = false;
+	}
+	else if (turn_ == BLACK && (b_castle_king_ || b_castle_queen_))
+	{
+		if (piece_clicked_ == b_king_)
+		{
+			if (pos.x - old_position.x == 2)	// if it castled kingside
+			{
+				Position temp(pos.x - 1, pos.y);
+				piece_map_[7][0]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[7][0];
+				piece_map_[7][0] = nullptr;
+			}
+			else if (pos.x - old_position.x == -2)
+			{
+				Position temp(pos.x + 1, pos.y);
+				piece_map_[0][0]->moveTo(&temp);
+				piece_map_[temp.x][temp.y] = piece_map_[0][0];
+				piece_map_[0][0] = nullptr;
+			}
+			b_castle_king_ = false;
+			b_castle_queen_ = false;
+		}
+		else if (b_castle_king_ && piece_map_[7][0] != nullptr && (piece_clicked_ == piece_map_[7][0] || piece_map_[7][0]->getPieceType() != B_ROOK))
+			b_castle_king_ = false;
+		else if (b_castle_king_ && piece_map_[0][0] != nullptr && (piece_clicked_ == piece_map_[0][0] || piece_map_[0][0]->getPieceType() != B_ROOK))
+			b_castle_queen_ = false;
+	}
+
+	// check for promotion
+	if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
+		promotePiece(piece_selected);
+
+	// change turn
+	turn_ *= -1;
+}
+
 void Game::handleUserInput(SDL_Event event)
 {
 	if (event.type == SDL_QUIT)
@@ -391,7 +527,8 @@ void Game::handleUserInput(SDL_Event event)
 
 void Game::handleMinimaxMove()
 {
-	Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), getPossibleMoves(game_mode_ + 4), game_mode_ + 4);
+	std::vector<Move> moves_to_play;
+	Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), game_mode_ + 4, &moves_to_play, 2);
 	std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
 	piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
 
@@ -422,6 +559,7 @@ void Game::setCheckMate()
 	}
 }
 
+// specifically for the computer:
 void Game::moveWithPromotion(Move* move, int promoted_piece)
 {
 	Position old_position = move->start;
@@ -751,6 +889,8 @@ void Game::canCastle(Piece* piece, std::vector<Position>* moves)
 
 bool Game::isLegal(Piece* piece, Position pos)
 {
+	bool first_move = piece->isFirstMove();
+
 	// create temporary captured piece if the move is a capture
 	Piece* captured_piece = nullptr;
 	if (checkPiece(&pos))
@@ -769,6 +909,8 @@ bool Game::isLegal(Piece* piece, Position pos)
 
 	// reset all pieces & the piece_map_
 	piece->moveTo(&old_position);
+	if (first_move)
+		piece->resetFirstMove();
 	piece_map_[old_position.x][old_position.y] = piece;
 	if (captured_piece != nullptr)
 		piece_map_[pos.x][pos.y] = captured_piece;

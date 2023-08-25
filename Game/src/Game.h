@@ -17,6 +17,8 @@
 #include "pieceMap.h"
 #include "minimax.h"
 
+struct Move;
+
 class Game		// SINGLETON CLASS
 {
 public:
@@ -49,7 +51,7 @@ public:
 
 	int** getBoardLayout();
 	std::vector<Move> getPossibleMoves(int team);
-	std::vector<Move> getPossibleMoves(int** board_layout, int team);
+	std::vector<Move> getPossibleMovesAfterMove(std::vector<Move>* moves_to_play);
 	
 
 private:
@@ -98,6 +100,7 @@ private:
 	bool isLegal(Piece* piece, Position pos);
 	bool isMate(Piece* piece);
 	void move(Move* move);
+	void moveWithoutDeleting(Move* move);
 	void moveWithPromotion(Move* move, int promoted_piece);
 	void setCheckMate();
 	void handleUserInput(SDL_Event event);

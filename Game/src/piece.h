@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include <vector>
+#include <cassert>
 
 struct Position
 {
@@ -27,14 +28,17 @@ public:
 		position_.y = y_pos;
 		team_ = team;
 		piece_type_ = piece_type;
+		first_move_ = true;
 	}
 	virtual ~Piece() {}
 
 	Position getPosition() { return position_; }
-	void moveTo(Position* pos) { position_.x = pos->x; position_.y = pos->y; }
+	void moveTo(Position* pos) { position_.x = pos->x; position_.y = pos->y; first_move_ = false; }
 	int getTeam() { return team_; }
 	int getPieceType() { return piece_type_; }
-
+	bool isFirstMove() { return first_move_; }
+	void resetFirstMove() { first_move_ = true; }
+	
 	virtual std::vector<Position> getMoves() = 0;
 	virtual bool isEnPassantAble() = 0;				// needed by utils to check en-passant-ability of pawns through piece pointers
 	virtual void setEnpassantAble(bool b) = 0;
@@ -43,6 +47,7 @@ private:
 	Position position_;		// these are measured from the top left
 	int team_;
 	int piece_type_;
+	bool first_move_;
 };
 
 #endif // !PIECE_H

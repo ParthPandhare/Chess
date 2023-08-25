@@ -20,7 +20,7 @@ std::vector<Position> Pawn::getMoves()
 	{
 		moves.push_back(Position(pos.x, pos.y + 1 * getTeam()));
 
-		if (first_move_ && !checkPiece(pos.x, pos.y + 2 * getTeam()))
+		if (isFirstMove() && !checkPiece(pos.x, pos.y + 2 * getTeam()))
 			moves.push_back(Position(pos.x, pos.y + 2 * getTeam()));
 	}
 	checkNormalCapture(&moves);

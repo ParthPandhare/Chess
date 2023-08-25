@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include "Game.h"
 
 struct Move
 {
@@ -40,13 +41,14 @@ public:
 		}
 	}
 
-	Move getMove(int** boardLayout, std::vector<Move> possibleMoves, int team);
+	Move getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth);
 
 private:
 	static Minimax* instancePtr;
 	Minimax() {}
 
 	int getEvaluation(int** boardLayout);
+	int getEvaluationAfterMove(int** boardLayout, Move* move, int team);
 };
 
 #endif // !MINIMAX_H

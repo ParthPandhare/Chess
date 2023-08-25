@@ -12,7 +12,6 @@ public:
 	Pawn(int x_pos, int y_pos, int team)
 		: Piece(x_pos, y_pos, team, 8 - team * 3)
 	{
-		first_move_ = true;
 		enpassant_able_ = false;
 	}
 	virtual ~Pawn() {}
@@ -25,7 +24,6 @@ public:
 	virtual std::vector<Position> getMoves();
 
 private:
-	bool first_move_;	// true if it's the pawn's first move (for double jump), false otherwise
 	bool enpassant_able_;
 };
 
