@@ -5,6 +5,7 @@ Minimax* Minimax::instancePtr = NULL;
 Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth)
 {
 	std::vector<Move> moves = Game::getInstance()->getPossibleMovesAfterMove(movesToPlay);
+
 	Move best_move = moves[0];
 	int best_eval = 0x7FFFFFFF * team;
 

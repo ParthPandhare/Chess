@@ -117,14 +117,14 @@ void Game::twoPlayerEventHandling()
 void Game::onePlayerEventHandling()
 {
 	// checks for mate
-	if (result_ == 0)
+	/*if (result_ == 0)
 	{
 		setCheckMate();
 		if (result_ != 0)
 			return;
 	}
 	else
-		return;
+		return;*/
 
 	/* checks for user inputs */
 	SDL_Event event;
@@ -228,7 +228,7 @@ std::vector<Move> Game::getPossibleMoves(int team)
 				else if (piece_map_[x][y] == b_king_)
 					canCastle(b_king_, &goal_positions);
 
-				getLegalMoves(&goal_positions, piece_map_[x][y]);
+				//getLegalMoves(&goal_positions, piece_map_[x][y]);
 				for (Position pos : goal_positions)
 					moves.push_back(Move(Position(x, y), pos));
 			}
