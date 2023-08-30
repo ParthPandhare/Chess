@@ -15,9 +15,11 @@ struct Move
 	{
 		this->start = st;
 		this->goal = go;
+		eval = 0;
 	}
 	Position start;
 	Position goal;
+	int eval;	// only used by the minimax methods to persist actual evaluation after multiple moves
 };
 
 class Minimax

@@ -7,17 +7,18 @@ Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPla
 	std::vector<Move> moves = Game::getInstance()->getPossibleMovesAfterMove(movesToPlay);
 
 	Move best_move = moves[0];
-	int best_eval = 0x7FFFFFFF * team;
+	best_move.eval = 0x7FFFFFFF * team;
 
 	for (Move move : moves)
 	{
 		if (depth == 0)
 		{
 			int current_eval = getEvaluationAfterMove(boardLayout, &move, team);
-			if ((team == WHITE && current_eval > best_eval) || (team == BLACK && current_eval < best_eval))
+			if ((team == WHITE && current_eval > best_move.eval) || (team == BLACK && current_eval < best_move.eval))
 			{
-				best_eval = current_eval;
-				best_move = move;
+				best_move.eval = current_eval;
+				best_move.start = move.start;
+				best_move.goal = move.goal;
 			}
 		}
 		else // if depth != 0
@@ -66,11 +67,11 @@ Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPla
 			Move next_depth_best_move = getMove(boardLayout, -team, movesToPlay, depth - 1);
 			movesToPlay->pop_back();
 
-			int current_eval = getEvaluationAfterMove(boardLayout, &next_depth_best_move, -team);
-			if ((team == WHITE && current_eval > best_eval) || (team == BLACK && current_eval < best_eval))
+			if ((team == WHITE && next_depth_best_move.eval > best_move.eval) || (team == BLACK && next_depth_best_move.eval < best_move.eval))
 			{
-				best_eval = current_eval;
-				best_move = move;
+				best_move.eval = next_depth_best_move.eval;
+				best_move.start = move.start;
+				best_move.goal = move.goal;
 			}
 
 			boardLayout[move.start.x][move.start.y] = start_square;
