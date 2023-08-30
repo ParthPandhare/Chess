@@ -117,14 +117,14 @@ void Game::twoPlayerEventHandling()
 void Game::onePlayerEventHandling()
 {
 	// checks for mate
-	/*if (result_ == 0)
+	if (result_ == 0)
 	{
 		setCheckMate();
 		if (result_ != 0)
 			return;
 	}
 	else
-		return;*/
+		return;
 
 	/* checks for user inputs */
 	SDL_Event event;
@@ -461,7 +461,10 @@ void Game::moveWithoutDeleting(Move* move)
 
 	// check for promotion
 	if ((pos.y == 0 && piece_type == W_PAWN) || (pos.y == 7 && piece_type == B_PAWN))
-		promotePiece(piece_selected);
+	{
+		Piece* temp_queen = new Queen(pos.x, pos.y, piece_selected->getTeam());
+		piece_map_[pos.x][pos.y] = temp_queen;
+	}
 
 	// change turn
 	turn_ *= -1;
