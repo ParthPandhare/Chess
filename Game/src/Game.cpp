@@ -531,7 +531,7 @@ void Game::handleUserInput(SDL_Event event)
 void Game::handleMinimaxMove()
 {
 	std::vector<Move> moves_to_play;
-	Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), game_mode_ + 4, &moves_to_play, 3);
+	Move computer_move = Minimax::getInstance()->getMove(getBoardLayout(), game_mode_ + 4, &moves_to_play, 1);
 	std::cout << computer_move.start.x << ", " << computer_move.start.y << " --> " << computer_move.goal.x << ", " << computer_move.goal.y << std::endl;
 	piece_clicked_ = piece_map_[computer_move.start.x][computer_move.start.y];
 

@@ -44,6 +44,7 @@ public:
 	}
 
 	Move getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth);
+	Move getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth, int original_evaluation, bool top_loop);
 
 private:
 	static Minimax* instancePtr;

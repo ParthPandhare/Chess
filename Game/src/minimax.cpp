@@ -4,6 +4,16 @@ Minimax* Minimax::instancePtr = NULL;
 
 Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth)
 {
+	if (depth < 1)
+	{
+		std::cout << "Error: depth has to be at least 1!" << std::endl;
+		assert(false);
+	}
+	return getMove(boardLayout, team, movesToPlay, depth * 2 - 1, getEvaluation(boardLayout), true);
+}
+
+Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPlay, int depth, int original_evaluation, bool top_loop)
+{
 	std::vector<Move> moves = Game::getInstance()->getPossibleMovesAfterMove(movesToPlay);
 
 	Move best_move = moves[0];
@@ -14,6 +24,13 @@ Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPla
 		if (depth == 0)
 		{
 			int current_eval = getEvaluationAfterMove(boardLayout, &move, team);
+
+			if ((team == BLACK && current_eval < original_evaluation) || (team == WHITE && current_eval > original_evaluation))
+			{
+				best_move.start = Position(-1, -1);		// tells the for loop to stop looking down this path
+				break;
+			}
+
 			if ((team == WHITE && current_eval > best_move.eval) || (team == BLACK && current_eval < best_move.eval))
 			{
 				best_move.eval = current_eval;
@@ -64,10 +81,10 @@ Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPla
 			}
 
 			movesToPlay->push_back(move);
-			Move next_depth_best_move = getMove(boardLayout, -team, movesToPlay, depth - 1);
+			Move next_depth_best_move = getMove(boardLayout, -team, movesToPlay, depth - 1, original_evaluation, false);
 			movesToPlay->pop_back();
 
-			if ((team == WHITE && next_depth_best_move.eval > best_move.eval) || (team == BLACK && next_depth_best_move.eval < best_move.eval))
+			if (next_depth_best_move.start.x != -1 && ((team == WHITE && next_depth_best_move.eval > best_move.eval) || (team == BLACK && next_depth_best_move.eval < best_move.eval)))
 			{
 				best_move.eval = next_depth_best_move.eval;
 				best_move.start = move.start;
@@ -94,6 +111,18 @@ Move Minimax::getMove(int** boardLayout, int team, std::vector<Move>* movesToPla
 				castling_queenside = false;
 				boardLayout[0][move.start.y] = 3 - 3 * team;
 				boardLayout[3][move.start.y] = EMPTY;
+			}
+
+			// if there's nothing good down this path, go back to the top loop
+			if (next_depth_best_move.start.x == -1)
+			{
+				if (top_loop == false)
+				{
+					best_move.start = next_depth_best_move.start;
+					break;
+				}
+				else if (top_loop == true)
+					continue;
 			}
 		}
 	}
